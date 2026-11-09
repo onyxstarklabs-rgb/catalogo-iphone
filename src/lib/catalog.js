@@ -31,9 +31,9 @@ export function validate({ shop, colors, warr, products }) {
 
 const shopFromRow = (r) => ({
   name: r.name, tagline: r.tagline, headline: r.headline, sub: r.sub, hours: r.hours,
-  whatsapp: r.whatsapp, whatsappLabel: r.whatsapp_label, whatsappAddon: r.whatsapp_addon
+  whatsapp: r.whatsapp, whatsappLabel: r.whatsapp_label, whatsappAddon: r.whatsapp_addon, reserveHours: r.reserve_hours
 });
-const SHOP_COLS = { name: "name", tagline: "tagline", headline: "headline", sub: "sub", hours: "hours", whatsapp: "whatsapp", whatsappLabel: "whatsapp_label", whatsappAddon: "whatsapp_addon" };
+const SHOP_COLS = { name: "name", tagline: "tagline", headline: "headline", sub: "sub", hours: "hours", whatsapp: "whatsapp", whatsappLabel: "whatsapp_label", whatsappAddon: "whatsapp_addon", reserveHours: "reserve_hours" };
 const shopToRow = (patch) => Object.fromEntries(Object.entries(patch).filter(([k]) => SHOP_COLS[k]).map(([k, v]) => [SHOP_COLS[k], v]));
 
 /**
@@ -289,6 +289,7 @@ export function useCatalog() {
       lines: ["Todos", ...new Set(current.products.map((p) => p.line))],
       hasOverrides,
       sync,
+      refresh: resync,
       updateShop,
       updateStorage,
       setProductStock,
@@ -299,7 +300,7 @@ export function useCatalog() {
       setProductImage,
       removeProductImage
     };
-  }, [current, hasOverrides, sync, updateShop, updateStorage, setProductStock, resetOverrides, createProduct, updateProduct, deleteProduct, setProductImage, removeProductImage]);
+  }, [current, hasOverrides, sync, resync, updateShop, updateStorage, setProductStock, resetOverrides, createProduct, updateProduct, deleteProduct, setProductImage, removeProductImage]);
 
   if (error) return { status: "error", data: null, error };
   if (!data) return { status: "loading", data: null, error: null };

@@ -4,6 +4,8 @@ import { CheckCircleOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/i
 import { cop, nameWith } from "../lib/format";
 import { priceOf } from "../lib/catalog";
 import { buildOrderSummary, whatsappLink } from "../lib/cart";
+import { createReservation } from "../lib/orders";
+import { supabase } from "../lib/supabase";
 import { FONT_DISPLAY } from "../theme";
 
 const DELIVERY = ["Recoger en el local", "Domicilio en Cúcuta"];
@@ -19,16 +21,36 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
   const whatsappEnabled = Boolean(shop.whatsappAddon);
   const href = ready && whatsappEnabled ? whatsappLink(catalog, cart.lines, cart.total, order.name, order.delivery) : undefined;
 
+  const [busy, setBusy] = useState(false);
+  const fmtDate = (iso) => new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Bogota" }).format(new Date(iso));
+
   const handleGenerateOrder = async () => {
-    if (!ready) return;
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    const text = buildOrderSummary(catalog, cart.lines, cart.total, order.name, order.delivery, code);
-    setTicket({ code, text });
+    if (!ready || busy) return;
+    setBusy(true);
     try {
-      await navigator.clipboard.writeText(text);
-      message.success(`Orden #${code} generada y copiada al portapapeles`);
-    } catch {
-      message.success(`Orden #${code} generada lista para presentar en tienda`);
+      let code; let total = cart.total; let expiresAt = null;
+      if (supabase) {
+        // La reserva se crea en el servidor: valida el pedido, descuenta el stock y fija el vencimiento.
+        const res = await createReservation({ name: order.name, delivery: order.delivery, lines: cart.lines, labelOf: (l) => nameWith(byId[l.id].name, l.gb), colorOf: (l) => catalog.colors[l.color]?.[0] ?? l.color });
+        ({ code, total, expiresAt } = res);
+      } else {
+        code = String(Math.floor(1000 + Math.random() * 9000));
+      }
+      let text = buildOrderSummary(catalog, cart.lines, total, order.name, order.delivery, code);
+      if (expiresAt) text += `\nApartada hasta: ${fmtDate(expiresAt)}`;
+      setTicket({ code, text, expiresAt });
+      if (supabase) { cart.clear(); catalog.refresh?.(); }
+      try {
+        await navigator.clipboard.writeText(text);
+        message.success(`Reserva #${code} creada y copiada al portapapeles`);
+      } catch {
+        message.success(`Reserva #${code} creada`);
+      }
+    } catch (e) {
+      message.error(e.message || "No se pudo crear la reserva");
+      catalog.refresh?.();
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -63,12 +85,12 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
             </>
           ) : (
             <>
-              <Button type="primary" size="large" block icon={<CheckCircleOutlined />} disabled={!ready} onClick={handleGenerateOrder}>
+              <Button type="primary" size="large" block icon={<CheckCircleOutlined />} disabled={!ready} loading={busy} onClick={handleGenerateOrder}>
                 Generar orden de reserva
               </Button>
               <Typography.Text type="secondary" style={{ fontSize: 13 }}>
                 {ready
-                  ? "Genera tu comprobante con código de reserva para presentarlo en el local o compartirlo."
+                  ? (supabase ? `Se aparta el equipo por ${shop.reserveHours ?? 24} horas. Presenta el código en el local.` : "Genera tu comprobante con código de reserva para presentarlo en el local o compartirlo.")
                   : cart.lines.length ? "Escribe tu nombre para generar la reserva." : "Agrega al menos un producto."}
               </Typography.Text>
             </>
@@ -76,7 +98,7 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
         </Flex>
       }
     >
-      {cart.lines.length === 0 ? (
+      {cart.lines.length === 0 && !ticket ? (
         <Empty description="Tu pedido está vacío. Elige un modelo del catálogo para empezar." />
       ) : (
         <Flex vertical gap={12}>
@@ -84,7 +106,7 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
             <Alert
               type="success"
               showIcon
-              title={`Reserva #${ticket.code} generada`}
+              title={`Reserva #${ticket.code} creada`}
               description={
                 <Flex vertical gap={8} style={{ marginTop: 4 }}>
                   <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 12, background: token.colorFillQuaternary, padding: 10, borderRadius: token.borderRadius }}>
@@ -130,6 +152,7 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
             );
           })}
 
+          {cart.lines.length > 0 && (<>
           <Form layout="vertical" requiredMark={false} style={{ marginTop: 8 }}>
             <Form.Item label="Tu nombre" htmlFor="pedido-nombre" required>
               <Input id="pedido-nombre" value={order.name} maxLength={80} autoComplete="name" placeholder="Nombre y apellido" onChange={(e) => setOrder({ ...order, name: e.target.value })} />
@@ -139,6 +162,7 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
             </Form.Item>
           </Form>
           <Button type="link" danger style={{ alignSelf: "flex-start", padding: 0 }} onClick={() => { setTicket(null); cart.clear(); }}>Vaciar pedido</Button>
+          </>)}
         </Flex>
       )}
     </Drawer>

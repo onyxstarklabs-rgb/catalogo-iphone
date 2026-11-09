@@ -87,3 +87,10 @@ Sin configurar nada, el catálogo funciona solo con los JSON (modo estático, si
 
 - Guardar las órdenes de reserva en la base para que el dueño las vea en el panel.
 - Fotos reales de cada cliente.
+
+## Reservas
+
+El cliente genera una reserva desde el carrito; se crea en Supabase (`create_order`), descuenta el stock y queda visible en el panel (pestaña "Reservas").
+- Topes: 3 unidades por producto, 5 por reserva, 3 reservas activas por nombre, 25 reservas globales cada 10 min.
+- Vencimiento automático (pg_cron, cada minuto): pasado el tiempo configurable (1–72 h, por defecto 24) el stock se repone.
+- El dueño puede marcar entregada o cancelar (repone stock). Las órdenes de más de 30 días se purgan.

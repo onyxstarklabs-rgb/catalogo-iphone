@@ -34,7 +34,7 @@ export default function ProductModal({ product, catalog, cart, onClose }) {
   };
 
   const note = out ? "Esta capacidad está agotada."
-    : maxed ? "Ya tienes todas las unidades disponibles en tu pedido."
+    : maxed ? "Llegaste al máximo de tu reserva (3 por producto y 5 en total) o ya tienes todas las unidades."
     : stock <= 2 ? `Quedan ${stock} en stock.` : "Disponible para entrega inmediata.";
 
   return (

@@ -5,6 +5,7 @@ import { cop, gbLabel } from "../lib/format";
 import { totalStock } from "../lib/catalog";
 import { FONT_DISPLAY } from "../theme";
 import ProductsAdmin from "./ProductsAdmin";
+import OrdersAdmin from "./OrdersAdmin";
 
 function downloadJson(filename, obj) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
@@ -193,6 +194,9 @@ export default function AdminDrawer({ open, onClose, catalog }) {
       <Form.Item label="Horario de atención">
         <Input value={shop.hours} onChange={(e) => updateShop({ hours: e.target.value })} />
       </Form.Item>
+      <Form.Item label="Tiempo de reserva (horas)" extra="Pasado este tiempo, la reserva vence y el stock se repone solo (1 a 72 h).">
+        <InputNumber min={1} max={72} precision={0} value={shop.reserveHours ?? 24} onChange={(v) => { if (Number.isInteger(v)) updateShop({ reserveHours: v }); }} />
+      </Form.Item>
     </Form>
   );
 
@@ -323,6 +327,7 @@ export default function AdminDrawer({ open, onClose, catalog }) {
       <Tabs
         items={[
           { key: "stock", label: "Stock y precios", children: stockTab },
+          { key: "orders", label: "Reservas", children: <OrdersAdmin currency={shop.currency} /> },
           { key: "products", label: "Productos y fotos", children: <ProductsAdmin catalog={catalog} /> },
           { key: "shop", label: "Datos del local", children: shopTab },
           {

@@ -12,10 +12,14 @@ function readSaved(catalog) {
     return saved.filter((l) => {
       const p = l && catalog.byId[l.id];
       return p && catalog.colors[l.color] && p.storages.some((s) => s.gb === l.gb)
-        && Number.isInteger(l.qty) && l.qty > 0 && l.qty <= stockOf(p, l.gb);
+        && Number.isInteger(l.qty) && l.qty > 0 && l.qty <= stockOf(p, l.gb) && l.qty <= MAX_PER_PRODUCT;
     }).map(({ id, gb, color, qty }) => ({ id, gb, color, qty }));
   } catch { return []; }
 }
+
+/** Topes por reserva (los mismos que valida el servidor). */
+export const MAX_PER_PRODUCT = 3;
+export const MAX_UNITS = 5;
 
 export function useCart(catalog) {
   const [lines, setLines] = useState(() => readSaved(catalog));
@@ -23,7 +27,11 @@ export function useCart(catalog) {
 
   /** Unidades de un modelo y capacidad que ya están en el pedido, sumando todos los colores. */
   const reserved = useCallback((id, gb) => lines.filter((l) => l.id === id && l.gb === gb).reduce((a, l) => a + l.qty, 0), [lines]);
-  const available = useCallback((id, gb) => stockOf(catalog.byId[id], gb) - reserved(id, gb), [catalog, reserved]);
+  const available = useCallback((id, gb) => {
+    const res = reserved(id, gb);
+    const units = lines.reduce((a, l) => a + l.qty, 0);
+    return Math.max(0, Math.min(stockOf(catalog.byId[id], gb) - res, MAX_PER_PRODUCT - res, MAX_UNITS - units));
+  }, [catalog, reserved, lines]);
 
   const add = useCallback((id, gb, color, qty) => {
     const n = Math.min(qty, available(id, gb));
@@ -41,7 +49,8 @@ export function useCart(catalog) {
       const l = cur[index];
       if (!l) return cur;
       const others = cur.filter((x, k) => k !== index && x.id === l.id && x.gb === l.gb).reduce((a, x) => a + x.qty, 0);
-      const max = stockOf(catalog.byId[l.id], l.gb) - others;
+      const units = cur.reduce((a, x, k) => (k === index ? a : a + x.qty), 0);
+      const max = Math.max(1, Math.min(stockOf(catalog.byId[l.id], l.gb) - others, MAX_PER_PRODUCT - others, MAX_UNITS - units));
       const next = Math.min(Math.max(Math.floor(qty) || 1, 1), max);
       return cur.map((x, k) => (k === index ? { ...x, qty: next } : x));
     });
@@ -63,7 +72,7 @@ export function buildOrderSummary(catalog, lines, total, name, delivery, code) {
     const p = byId[l.id];
     return `• ${l.qty} × ${nameWith(p.name, l.gb)} ${colors[l.color][0]} (${p.cond}, garantía ${warr[p.warr].months} meses) — ${cop(priceOf(p, l.gb) * l.qty, shop.currency)}`;
   });
-  const header = code ? `ORDEN DE RESERVA #${code} · ${shop.name}` : `Hola ${shop.name}, quiero hacer este pedido:`;
+  const header = code ? `RESERVA #${code} · ${shop.name}` : `Hola ${shop.name}, quiero hacer este pedido:`;
   return `${header}\n${rows.join("\n")}\nTotal: ${cop(total, shop.currency)}\nCliente: ${name.trim()}\nEntrega: ${delivery}`;
 }
 
