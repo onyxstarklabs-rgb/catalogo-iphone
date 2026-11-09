@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "./supabase";
 
-const ADMIN_KEY = "catalogo-admin-v1";
 const url = (name) => `${import.meta.env.BASE_URL}data/${name}.json`;
 
 async function getJSON(name) {
@@ -27,48 +27,40 @@ export function validate({ shop, colors, warr, products }) {
   return err;
 }
 
-/** Lo único que se guarda en el navegador: textos del local y precio/stock por modelo+capacidad. */
-function slim(cur) {
-  return {
-    v: 2,
-    shop: cur.shop,
-    products: cur.products.map((p) => ({ id: p.id, storages: p.storages.map(({ gb, price, stock }) => ({ gb, price, stock })) }))
-  };
-}
-
-function saveOverrides(cur) {
-  try { localStorage.setItem(ADMIN_KEY, JSON.stringify(slim(cur))); } catch { /* sin almacenamiento */ }
-}
+const shopFromRow = (r) => ({
+  name: r.name, tagline: r.tagline, headline: r.headline, sub: r.sub, hours: r.hours,
+  whatsapp: r.whatsapp, whatsappLabel: r.whatsapp_label, whatsappAddon: r.whatsapp_addon
+});
+const SHOP_COLS = { name: "name", tagline: "tagline", headline: "headline", sub: "sub", hours: "hours", whatsapp: "whatsapp", whatsappLabel: "whatsapp_label", whatsappAddon: "whatsapp_addon" };
+const shopToRow = (patch) => Object.fromEntries(Object.entries(patch).filter(([k]) => SHOP_COLS[k]).map(([k, v]) => [SHOP_COLS[k], v]));
 
 /**
- * Aplica lo guardado SOBRE los datos desplegados: nombres, colores y fichas siempre vienen del deploy,
- * así que un guardado viejo (modelo borrado, esquema distinto) no puede romper la app; se ignora lo que ya no existe.
+ * Los datos en vivo (precio, stock y textos del local) viven en Supabase; la estructura (nombres, colores, fichas)
+ * siempre viene de los JSON del deploy. Lo que no exista o sea inválido en la base se ignora y queda el valor del JSON.
  */
-function readOverrides(base) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(ADMIN_KEY) || "null");
-    if (!raw || typeof raw !== "object") return null;
-    const saved = new Map((Array.isArray(raw.products) ? raw.products : []).filter((p) => p && Array.isArray(p.storages)).map((p) => [p.id, p.storages]));
-    const merged = {
-      ...base,
-      shop: raw.shop && typeof raw.shop === "object" ? { ...base.shop, ...raw.shop } : base.shop,
-      products: base.products.map((p) => {
-        const st = saved.get(p.id);
-        if (!st) return p;
-        return {
-          ...p,
-          storages: p.storages.map((s) => {
-            const o = st.find((x) => x && x.gb === s.gb);
-            const ok = o && Number.isInteger(o.price) && o.price > 0 && Number.isInteger(o.stock) && o.stock >= 0;
-            return ok ? { ...s, price: o.price, stock: o.stock } : s;
-          })
-        };
+function applyRemote(base, shopRow, stockRows) {
+  const live = new Map((stockRows || []).map((r) => [`${r.product_id}|${r.gb}`, r]));
+  const merged = {
+    ...base,
+    shop: shopRow ? { ...base.shop, ...shopFromRow(shopRow) } : base.shop,
+    products: base.products.map((p) => ({
+      ...p,
+      storages: p.storages.map((s) => {
+        const r = live.get(`${p.id}|${s.gb}`);
+        return r && Number.isInteger(r.price) && r.price > 0 && Number.isInteger(r.stock) && r.stock >= 0 ? { ...s, price: r.price, stock: r.stock } : s;
       })
-    };
-    return validate(merged).length === 0 ? merged : null;
-  } catch {
-    return null;
-  }
+    }))
+  };
+  return validate(merged).length === 0 ? merged : base;
+}
+
+async function fetchRemote() {
+  const [shop, stock] = await Promise.all([
+    supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle(),
+    supabase.from("stock").select("product_id,gb,price,stock")
+  ]);
+  if (shop.error || stock.error) throw new Error((shop.error || stock.error).message);
+  return { shop: shop.data, stock: stock.data };
 }
 
 async function loadCatalog() {
@@ -78,82 +70,122 @@ async function loadCatalog() {
   return { shop, colors, warr, products };
 }
 
+const DEBOUNCE_MS = 500;
+
 export function useCatalog() {
   const [base, setBase] = useState(null);
   const [current, setCurrent] = useState(null);
   const [error, setError] = useState(null);
-  const [hasOverrides, setHasOverrides] = useState(false);
+  const [sync, setSync] = useState({ status: "idle", error: null });
+  const baseRef = useRef(null);
+  const queue = useRef(new Map());
+  const inflight = useRef(0);
+
+  const resync = useCallback(async () => {
+    if (!supabase || !baseRef.current) return;
+    try {
+      const r = await fetchRemote();
+      setCurrent(applyRemote(baseRef.current, r.shop, r.stock));
+    } catch { /* se mantiene lo que hay en pantalla */ }
+  }, []);
 
   useEffect(() => {
     let alive = true;
     loadCatalog().then(
-      (loaded) => {
+      async (loaded) => {
         if (!alive) return;
+        baseRef.current = loaded;
         setBase(loaded);
-        const saved = readOverrides(loaded);
-        setCurrent(saved || loaded);
-        setHasOverrides(Boolean(saved));
+        let next = loaded;
+        if (supabase) {
+          try { const r = await fetchRemote(); next = applyRemote(loaded, r.shop, r.stock); } catch { /* sin conexión a la base: se usa el JSON */ }
+        }
+        if (alive) setCurrent(next);
       },
       (err) => alive && setError(err.message)
     );
     return () => { alive = false; };
   }, []);
 
-  const persist = useCallback((next) => {
-    setCurrent(next);
-    setHasOverrides(true);
-    saveOverrides(next);
-  }, []);
+  // Cambios hechos desde otro dispositivo (o por otro cliente) llegan en vivo.
+  useEffect(() => {
+    if (!supabase || !base) return undefined;
+    let timer;
+    const onChange = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { if (queue.current.size === 0 && inflight.current === 0) resync(); }, 300);
+    };
+    const channel = supabase.channel("catalogo-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, onChange)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shop_settings" }, onChange)
+      .subscribe();
+    return () => { clearTimeout(timer); supabase.removeChannel(channel); };
+  }, [base, resync]);
+
+  const flush = useCallback(async (key) => {
+    const job = queue.current.get(key);
+    if (!job) return;
+    queue.current.delete(key);
+    inflight.current += 1;
+    setSync({ status: "saving", error: null });
+    let failed = null;
+    try {
+      const { data, error: err } = await job.run(job.patch);
+      if (err) failed = err.message;
+      else if (!data || data.length === 0) failed = "Sin permiso para guardar (inicia sesión como dueño)";
+    } catch (e) {
+      failed = e.message || "Error de red";
+    }
+    inflight.current -= 1;
+    if (failed) {
+      setSync({ status: "error", error: `No se pudo guardar: ${failed}` });
+      await resync();
+    } else if (queue.current.size === 0 && inflight.current === 0) {
+      setSync({ status: "saved", error: null });
+    }
+  }, [resync]);
+
+  const enqueue = useCallback((key, patch, run) => {
+    const prev = queue.current.get(key);
+    if (prev) clearTimeout(prev.timer);
+    const job = { patch: { ...(prev ? prev.patch : {}), ...patch }, run };
+    job.timer = setTimeout(() => flush(key), DEBOUNCE_MS);
+    queue.current.set(key, job);
+  }, [flush]);
 
   const updateShop = useCallback((patch) => {
-    setCurrent((cur) => {
-      if (!cur) return cur;
-      const next = { ...cur, shop: { ...cur.shop, ...patch } };
-      saveOverrides(next);
-      setHasOverrides(true);
-      return next;
-    });
-  }, []);
-
-  const setProductStock = useCallback((productId, stockValue) => {
-    setCurrent((cur) => {
-      if (!cur) return cur;
-      const products = cur.products.map((p) => {
-        if (p.id !== productId) return p;
-        return {
-          ...p,
-          storages: p.storages.map((s) => ({ ...s, stock: stockValue }))
-        };
-      });
-      const next = { ...cur, products };
-      saveOverrides(next);
-      setHasOverrides(true);
-      return next;
-    });
-  }, []);
+    setCurrent((cur) => (cur ? { ...cur, shop: { ...cur.shop, ...patch } } : cur));
+    enqueue("shop", shopToRow(patch), (row) => supabase.from("shop_settings").update(row).eq("id", 1).select("id"));
+  }, [enqueue]);
 
   const updateStorage = useCallback((productId, gb, patch) => {
-    setCurrent((cur) => {
-      if (!cur) return cur;
-      const products = cur.products.map((p) => {
-        if (p.id !== productId) return p;
-        return {
-          ...p,
-          storages: p.storages.map((s) => (s.gb === gb ? { ...s, ...patch } : s))
-        };
-      });
-      const next = { ...cur, products };
-      saveOverrides(next);
-      setHasOverrides(true);
-      return next;
-    });
-  }, []);
+    const row = {};
+    if (patch.price !== undefined) row.price = patch.price;
+    if (patch.stock !== undefined) row.stock = patch.stock;
+    setCurrent((cur) => (cur ? {
+      ...cur,
+      products: cur.products.map((p) => (p.id !== productId ? p : { ...p, storages: p.storages.map((s) => (s.gb === gb ? { ...s, ...row } : s)) }))
+    } : cur));
+    enqueue(`stock|${productId}|${gb}`, row, (r) => supabase.from("stock").update(r).eq("product_id", productId).eq("gb", gb).select("product_id"));
+  }, [enqueue]);
+
+  const setProductStock = useCallback((productId, stockValue) => {
+    const p = current && current.products.find((x) => x.id === productId);
+    if (p) p.storages.forEach((s) => updateStorage(productId, s.gb, { stock: stockValue }));
+  }, [current, updateStorage]);
 
   const resetOverrides = useCallback(() => {
-    try { localStorage.removeItem(ADMIN_KEY); } catch { /* ignore */ }
-    setHasOverrides(false);
-    if (base) setCurrent(base);
-  }, [base]);
+    if (!base) return;
+    setCurrent(base);
+    updateShop(base.shop);
+    base.products.forEach((p) => p.storages.forEach((s) => updateStorage(p.id, s.gb, { price: s.price, stock: s.stock })));
+  }, [base, updateShop, updateStorage]);
+
+  const hasOverrides = useMemo(() => {
+    if (!base || !current) return false;
+    if (JSON.stringify(base.shop) !== JSON.stringify(current.shop)) return true;
+    return base.products.some((p, i) => JSON.stringify(p.storages) !== JSON.stringify(current.products[i].storages));
+  }, [base, current]);
 
   const data = useMemo(() => {
     if (!current) return null;
@@ -162,13 +194,13 @@ export function useCatalog() {
       byId: Object.fromEntries(current.products.map((p) => [p.id, p])),
       lines: ["Todos", ...new Set(current.products.map((p) => p.line))],
       hasOverrides,
+      sync,
       updateShop,
       updateStorage,
       setProductStock,
-      resetOverrides,
-      persist
+      resetOverrides
     };
-  }, [current, hasOverrides, updateShop, updateStorage, setProductStock, resetOverrides, persist]);
+  }, [current, hasOverrides, sync, updateShop, updateStorage, setProductStock, resetOverrides]);
 
   if (error) return { status: "error", data: null, error };
   if (!data) return { status: "loading", data: null, error: null };

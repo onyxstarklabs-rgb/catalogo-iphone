@@ -21,8 +21,10 @@ export default function AdminDrawer({ open, onClose, catalog }) {
   const { message } = AntApp.useApp();
   const screens = Grid.useBreakpoint();
   const { token } = theme.useToken();
-  const { shop, products, lines, hasOverrides, updateShop, updateStorage, setProductStock, resetOverrides } = catalog;
+  const { shop, products, lines, hasOverrides, sync, updateShop, updateStorage, setProductStock, resetOverrides } = catalog;
 
+  const [waDraft, setWaDraft] = useState(shop.whatsapp);
+  const waValid = /^\d{10,15}$/.test(waDraft);
   const [lineFilter, setLineFilter] = useState("Todos");
   const [search, setSearch] = useState("");
 
@@ -54,7 +56,7 @@ export default function AdminDrawer({ open, onClose, catalog }) {
         type="info"
         showIcon
         title="Edición de inventario en vivo (Plan Base)"
-        description="Cualquier cambio de precio o stock que hagas aquí se refleja al instante en el catálogo y en las órdenes de reserva."
+        description="Cada cambio se guarda en la base de datos y lo ven todos los clientes al instante, en cualquier dispositivo."
       />
 
       <Flex gap={8} wrap>
@@ -172,8 +174,8 @@ export default function AdminDrawer({ open, onClose, catalog }) {
         type="success"
         showIcon
         style={{ marginBottom: 16 }}
-        title="Personaliza el local en vivo frente al cliente"
-        description="Cambia el nombre, ubicación y textos de la tienda para que el dueño vea su propia marca durante la demostración."
+        title="Datos del local"
+        description="Se guardan solos y se publican al instante en el catálogo de todos los clientes."
       />
       <Form.Item label="Nombre de la tienda">
         <Input value={shop.name} onChange={(e) => updateShop({ name: e.target.value })} />
@@ -248,15 +250,28 @@ export default function AdminDrawer({ open, onClose, catalog }) {
 
         {shop.whatsappAddon && (
           <Form layout="vertical" requiredMark={false} style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${token.colorBorderSecondary}` }}>
-            <Form.Item label="Número de WhatsApp del Chatbot / Tienda (con indicativo 57)" style={{ marginBottom: 0 }}>
-              <Input
-                value={shop.whatsapp}
-                placeholder="573001234567"
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
-                  updateShop({ whatsapp: digits, whatsappLabel: `+${digits}` });
-                }}
-              />
+            <Form.Item
+              label="Número de WhatsApp del Chatbot / Tienda (con indicativo 57)"
+              validateStatus={waDraft && !waValid ? "error" : undefined}
+              help={waDraft && !waValid ? "Solo dígitos con indicativo, de 10 a 15" : undefined}
+              style={{ marginBottom: 0 }}
+            >
+              <Flex gap={8}>
+                <Input
+                  value={waDraft}
+                  placeholder="573001234567"
+                  inputMode="numeric"
+                  maxLength={15}
+                  onChange={(e) => setWaDraft(e.target.value.replace(/\D/g, ""))}
+                />
+                <Button
+                  type="primary"
+                  disabled={!waValid || waDraft === shop.whatsapp}
+                  onClick={() => updateShop({ whatsapp: waDraft, whatsappLabel: `+${waDraft}` })}
+                >
+                  Guardar
+                </Button>
+              </Flex>
             </Form.Item>
           </Form>
         )}
@@ -293,6 +308,9 @@ export default function AdminDrawer({ open, onClose, catalog }) {
               Descargar shop.json
             </Button>
           </Flex>
+          <Tag color={sync.status === "error" ? "error" : "default"} style={{ margin: 0 }}>
+            {sync.status === "saving" ? "Guardando…" : sync.status === "error" ? sync.error : sync.status === "saved" ? "Guardado" : "Sincronizado"}
+          </Tag>
           {hasOverrides && (
             <Button danger icon={<ReloadOutlined />} onClick={handleReset}>
               Restaurar original

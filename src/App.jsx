@@ -7,19 +7,11 @@ import CartDrawer from "./components/CartDrawer";
 import AdminDrawer from "./components/AdminDrawer";
 import { useCatalog } from "./lib/catalog";
 import { useCart } from "./lib/cart";
+import { useOwner } from "./lib/auth";
 import { FONT_DISPLAY } from "./theme";
 
 const GUTTER = [{ xs: 10, md: 16 }, { xs: 10, md: 16 }];
 const COL = { xs: 12, sm: 12, md: 8, lg: 6 };
-const ADMIN_PIN = "2026";
-const ADMIN_AUTH_KEY = "catalogo-admin-auth-v1";
-
-// sessionStorage puede lanzar (modo privado estricto, cookies bloqueadas): nunca debe tumbar la app.
-const auth = {
-  get: () => { try { return sessionStorage.getItem(ADMIN_AUTH_KEY) === "1"; } catch { return false; } },
-  set: () => { try { auth.set(); } catch { /* sesión solo en memoria */ } },
-  clear: () => { try { auth.clear(); } catch { /* ignore */ } }
-};
 
 function Shop({ catalog }) {
   const { message } = AntApp.useApp();
@@ -35,23 +27,32 @@ function Shop({ catalog }) {
   const [cartOpen, setCartOpen] = useState(false);
 
   const hasAdminParam = useMemo(() => new URLSearchParams(window.location.search).has("admin"), []);
-  const [isUnlocked, setIsUnlocked] = useState(auth.get);
-  const [pinModalOpen, setPinModalOpen] = useState(() => hasAdminParam && !auth.get());
-  const [adminOpen, setAdminOpen] = useState(() => hasAdminParam && auth.get());
-  const [pinInput, setPinInput] = useState("");
+  const owner = useOwner();
+  const isUnlocked = owner.owner;
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginForm] = Form.useForm();
   const clickCountRef = useRef({ count: 0, timer: null });
+
+  // ?admin abre el acceso del dueño en cuanto se sabe si ya hay sesión.
+  useEffect(() => {
+    if (!hasAdminParam || !owner.ready || !owner.available) return;
+    if (owner.owner) setAdminOpen(true); else setLoginOpen(true);
+  }, [hasAdminParam, owner.ready, owner.available, owner.owner]);
 
   const [order, setOrder] = useState({ name: "", delivery: "Recoger en el local" });
 
   useEffect(() => { document.title = `${shop.name} · Catálogo`; }, [shop.name]);
 
   const handleLogoSecretClick = () => {
+    if (!owner.available) return;
     clearTimeout(clickCountRef.current.timer);
     clickCountRef.current.count += 1;
     if (clickCountRef.current.count >= 5) {
       clickCountRef.current.count = 0;
       if (isUnlocked) setAdminOpen(true);
-      else setPinModalOpen(true);
+      else setLoginOpen(true);
     } else {
       clickCountRef.current.timer = setTimeout(() => {
         clickCountRef.current.count = 0;
@@ -59,23 +60,24 @@ function Shop({ catalog }) {
     }
   };
 
-  const handleUnlockPin = () => {
-    if (pinInput.trim() === ADMIN_PIN) {
-      auth.set();
-      setIsUnlocked(true);
-      setPinModalOpen(false);
-      setPinInput("");
+  const handleLogin = async ({ email, password }) => {
+    setLoginBusy(true);
+    try {
+      await owner.signIn(email, password);
+      setLoginOpen(false);
+      loginForm.resetFields();
       setAdminOpen(true);
       message.success("Acceso de propietario desbloqueado");
-    } else {
-      message.error("PIN incorrecto");
+    } catch (e) {
+      message.error(e.message);
+    } finally {
+      setLoginBusy(false);
     }
   };
 
-  const handleLockAdmin = () => {
-    auth.clear();
-    setIsUnlocked(false);
+  const handleLockAdmin = async () => {
     setAdminOpen(false);
+    await owner.signOut();
     if (window.location.search.includes("admin")) {
       window.history.replaceState({}, "", window.location.pathname);
     }
@@ -174,26 +176,21 @@ function Shop({ catalog }) {
       </main>
 
       <Modal
-        open={pinModalOpen}
-        onCancel={() => {
-          setPinModalOpen(false);
-          setPinInput("");
-        }}
+        open={loginOpen}
+        onCancel={() => { setLoginOpen(false); loginForm.resetFields(); }}
         title={<Flex align="center" gap={8}><LockOutlined /><span>Acceso exclusivo del local</span></Flex>}
         okText="Ingresar al panel"
         cancelText="Cancelar"
-        onOk={handleUnlockPin}
+        onOk={() => loginForm.submit()}
+        okButtonProps={{ loading: loginBusy }}
         destroyOnHidden
       >
-        <Form layout="vertical" onFinish={handleUnlockPin} style={{ marginTop: 12 }}>
-          <Form.Item label="Ingresa el PIN de propietario para administrar precios, stock y módulos">
-            <Input.Password
-              autoFocus
-              placeholder="PIN de propietario"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              onPressEnter={handleUnlockPin}
-            />
+        <Form form={loginForm} layout="vertical" onFinish={handleLogin} requiredMark={false} style={{ marginTop: 12 }}>
+          <Form.Item name="email" label="Correo del propietario" rules={[{ required: true, type: "email", message: "Escribe un correo válido" }]}>
+            <Input autoFocus autoComplete="username" maxLength={254} onPressEnter={() => loginForm.submit()} />
+          </Form.Item>
+          <Form.Item name="password" label="Contraseña" rules={[{ required: true, message: "Escribe la contraseña" }]}>
+            <Input.Password autoComplete="current-password" maxLength={128} onPressEnter={() => loginForm.submit()} />
           </Form.Item>
         </Form>
       </Modal>

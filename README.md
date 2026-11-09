@@ -66,12 +66,22 @@ Hosting estático gratuito, sin variables de entorno ni secretos.
 
 ## Seguridad
 
-- Sin backend, sin base de datos y sin claves en el código. Lo único que sale del navegador es el enlace `wa.me` que abre el cliente.
+- Sin backend propio ni claves secretas en el código. Salen del navegador el enlace `wa.me` y, si se activa Supabase, las lecturas públicas y las escrituras del dueño autenticado (protegidas por RLS).
 - CSP por cabecera: scripts solo propios (sin `eval` ni inline), sin formularios, sin iframes. **Excepción documentada:** `style-src` admite `'unsafe-inline'` porque Ant Design inyecta sus estilos en tiempo de ejecución y un sitio estático no puede generar un nonce por petición. Afecta solo a estilos, no a scripts.
 - Dependencias fijadas a versión exacta con `package-lock.json`, instaladas sin scripts, todas desde el registro oficial de npm, con `npm audit` sin hallazgos al momento de integrarlas. Revisa `npm audit` y actualiza con regularidad.
 - Los datos de `public/data` se validan al cargar y React escapa todo texto antes de pintarlo. El carrito guardado en el navegador se revalida contra el catálogo vigente.
 
+## Datos en vivo con Supabase (opcional)
+
+Sin configurar nada, el catálogo funciona solo con los JSON (modo estático, sin panel). Con Supabase, el dueño edita precio, stock y datos del local desde el panel y todos los clientes lo ven al instante.
+
+1. Crea un proyecto en Supabase y aplica el esquema (tablas `shop_settings`, `stock`, `owners` con RLS: lectura pública, escritura solo del dueño).
+2. En Authentication crea el usuario del dueño (correo y contraseña) y agrégalo a `owners`: `insert into public.owners (user_id) values ('<uuid del usuario>');`
+3. Variables de entorno (local en `.env.local`, en Vercel en Settings → Environment Variables): `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Ver `.env.example`. La clave publicable es segura de exponer; la `service_role` nunca va en el front.
+4. Añade el dominio del proyecto a `connect-src` en `vercel.json` y `public/_headers`.
+5. Los JSON siguen definiendo la estructura (modelos, colores, fichas) y sirven de respaldo si la base no responde. Acceso al panel: `?admin` o 5 clics en el logo.
+
 ## Pendiente
 
-- Panel para que el dueño edite stock y precios sin tocar JSON.
+- Guardar las órdenes de reserva en la base para que el dueño las vea en el panel.
 - Fotos reales de cada cliente.
