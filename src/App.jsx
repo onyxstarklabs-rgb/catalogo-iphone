@@ -196,7 +196,6 @@ function Shop({ catalog }) {
         type="primary"
         icon={<ShoppingCartOutlined />}
         badge={{ count: cart.count, overflowCount: 99 }}
-        tooltip="Mi pedido"
         aria-label="Mi pedido"
         onClick={() => setCartOpen(true)}
         style={{ insetInlineEnd: "max(20px, env(safe-area-inset-right, 0px))", insetBlockEnd: "calc(20px + env(safe-area-inset-bottom, 0px))", width: 56, height: 56 }}

@@ -31,7 +31,7 @@ function PhotoPicker({ value, onChange, current }) {
         >
           <Button icon={<PictureOutlined />} loading={busy}>{shown ? "Cambiar foto" : "Elegir foto"}</Button>
         </Upload>
-        <Typography.Text type="secondary" style={{ fontSize: 12 }}>JPG, PNG o WebP. Se optimiza solo (máx. 1200 px).</Typography.Text>
+        <Typography.Text type="secondary" style={{ fontSize: 12 }}>JPG, PNG o WebP de hasta 15 MB. Se optimiza sola.</Typography.Text>
       </Flex>
     </Flex>
   );
