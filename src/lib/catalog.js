@@ -12,9 +12,13 @@ async function getJSON(name) {
 /** Revisa los datos del cliente; si algo está mal se muestra el error en lugar de un catálogo a medias. */
 export function validate({ shop, colors, warr, products }) {
   const err = [];
-  if (!/^\d{10,15}$/.test(shop.whatsapp)) err.push("shop.whatsapp debe ser solo dígitos con indicativo de país (10 a 15 dígitos)");
+  if (typeof shop?.whatsapp !== "string" || !/^\d{10,15}$/.test(shop.whatsapp)) err.push("shop.whatsapp debe ser solo dígitos con indicativo de país (10 a 15 dígitos)");
+  if (!Array.isArray(products) || products.length === 0) return [...err, "products debe ser una lista con al menos un modelo"];
   for (const p of products) {
+    if (!p || typeof p.id !== "string") { err.push("modelo sin id"); continue; }
     if (!warr[p.warr]) err.push(`${p.id}: garantía "${p.warr}" no existe`);
+    if (!Array.isArray(p.colors) || p.colors.length === 0) { err.push(`${p.id}: sin colores`); continue; }
+    if (!Array.isArray(p.storages) || p.storages.length === 0) { err.push(`${p.id}: sin capacidades`); continue; }
     for (const c of p.colors) if (!colors[c]) err.push(`${p.id}: color "${c}" no existe`);
     for (const s of p.storages) {
       if (!Number.isInteger(s.price) || s.price <= 0 || !Number.isInteger(s.stock) || s.stock < 0) err.push(`${p.id} ${s.gb}: precio o stock inválido`);
@@ -23,15 +27,43 @@ export function validate({ shop, colors, warr, products }) {
   return err;
 }
 
+/** Lo único que se guarda en el navegador: textos del local y precio/stock por modelo+capacidad. */
+function slim(cur) {
+  return {
+    v: 2,
+    shop: cur.shop,
+    products: cur.products.map((p) => ({ id: p.id, storages: p.storages.map(({ gb, price, stock }) => ({ gb, price, stock })) }))
+  };
+}
+
+function saveOverrides(cur) {
+  try { localStorage.setItem(ADMIN_KEY, JSON.stringify(slim(cur))); } catch { /* sin almacenamiento */ }
+}
+
+/**
+ * Aplica lo guardado SOBRE los datos desplegados: nombres, colores y fichas siempre vienen del deploy,
+ * así que un guardado viejo (modelo borrado, esquema distinto) no puede romper la app; se ignora lo que ya no existe.
+ */
 function readOverrides(base) {
   try {
     const raw = JSON.parse(localStorage.getItem(ADMIN_KEY) || "null");
     if (!raw || typeof raw !== "object") return null;
+    const saved = new Map((Array.isArray(raw.products) ? raw.products : []).filter((p) => p && Array.isArray(p.storages)).map((p) => [p.id, p.storages]));
     const merged = {
-      shop: raw.shop ? { ...base.shop, ...raw.shop } : base.shop,
-      colors: base.colors,
-      warr: base.warr,
-      products: Array.isArray(raw.products) ? raw.products : base.products
+      ...base,
+      shop: raw.shop && typeof raw.shop === "object" ? { ...base.shop, ...raw.shop } : base.shop,
+      products: base.products.map((p) => {
+        const st = saved.get(p.id);
+        if (!st) return p;
+        return {
+          ...p,
+          storages: p.storages.map((s) => {
+            const o = st.find((x) => x && x.gb === s.gb);
+            const ok = o && Number.isInteger(o.price) && o.price > 0 && Number.isInteger(o.stock) && o.stock >= 0;
+            return ok ? { ...s, price: o.price, stock: o.stock } : s;
+          })
+        };
+      })
     };
     return validate(merged).length === 0 ? merged : null;
   } catch {
@@ -70,16 +102,14 @@ export function useCatalog() {
   const persist = useCallback((next) => {
     setCurrent(next);
     setHasOverrides(true);
-    try {
-      localStorage.setItem(ADMIN_KEY, JSON.stringify({ shop: next.shop, products: next.products }));
-    } catch { /* sin almacenamiento */ }
+    saveOverrides(next);
   }, []);
 
   const updateShop = useCallback((patch) => {
     setCurrent((cur) => {
       if (!cur) return cur;
       const next = { ...cur, shop: { ...cur.shop, ...patch } };
-      try { localStorage.setItem(ADMIN_KEY, JSON.stringify({ shop: next.shop, products: next.products })); } catch { /* ignore */ }
+      saveOverrides(next);
       setHasOverrides(true);
       return next;
     });
@@ -96,7 +126,7 @@ export function useCatalog() {
         };
       });
       const next = { ...cur, products };
-      try { localStorage.setItem(ADMIN_KEY, JSON.stringify({ shop: next.shop, products: next.products })); } catch { /* ignore */ }
+      saveOverrides(next);
       setHasOverrides(true);
       return next;
     });
@@ -113,7 +143,7 @@ export function useCatalog() {
         };
       });
       const next = { ...cur, products };
-      try { localStorage.setItem(ADMIN_KEY, JSON.stringify({ shop: next.shop, products: next.products })); } catch { /* ignore */ }
+      saveOverrides(next);
       setHasOverrides(true);
       return next;
     });

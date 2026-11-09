@@ -14,6 +14,13 @@ const COL = { xs: 12, sm: 12, md: 8, lg: 6 };
 const ADMIN_PIN = "2026";
 const ADMIN_AUTH_KEY = "catalogo-admin-auth-v1";
 
+// sessionStorage puede lanzar (modo privado estricto, cookies bloqueadas): nunca debe tumbar la app.
+const auth = {
+  get: () => { try { return sessionStorage.getItem(ADMIN_AUTH_KEY) === "1"; } catch { return false; } },
+  set: () => { try { auth.set(); } catch { /* sesión solo en memoria */ } },
+  clear: () => { try { auth.clear(); } catch { /* ignore */ } }
+};
+
 function Shop({ catalog }) {
   const { message } = AntApp.useApp();
   const { token } = theme.useToken();
@@ -28,9 +35,9 @@ function Shop({ catalog }) {
   const [cartOpen, setCartOpen] = useState(false);
 
   const hasAdminParam = useMemo(() => new URLSearchParams(window.location.search).has("admin"), []);
-  const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(ADMIN_AUTH_KEY) === "1");
-  const [pinModalOpen, setPinModalOpen] = useState(() => hasAdminParam && sessionStorage.getItem(ADMIN_AUTH_KEY) !== "1");
-  const [adminOpen, setAdminOpen] = useState(() => hasAdminParam && sessionStorage.getItem(ADMIN_AUTH_KEY) === "1");
+  const [isUnlocked, setIsUnlocked] = useState(auth.get);
+  const [pinModalOpen, setPinModalOpen] = useState(() => hasAdminParam && !auth.get());
+  const [adminOpen, setAdminOpen] = useState(() => hasAdminParam && auth.get());
   const [pinInput, setPinInput] = useState("");
   const clickCountRef = useRef({ count: 0, timer: null });
 
@@ -54,7 +61,7 @@ function Shop({ catalog }) {
 
   const handleUnlockPin = () => {
     if (pinInput.trim() === ADMIN_PIN) {
-      sessionStorage.setItem(ADMIN_AUTH_KEY, "1");
+      auth.set();
       setIsUnlocked(true);
       setPinModalOpen(false);
       setPinInput("");
@@ -66,7 +73,7 @@ function Shop({ catalog }) {
   };
 
   const handleLockAdmin = () => {
-    sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    auth.clear();
     setIsUnlocked(false);
     setAdminOpen(false);
     if (window.location.search.includes("admin")) {
