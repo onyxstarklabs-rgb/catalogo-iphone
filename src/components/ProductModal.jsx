@@ -3,7 +3,8 @@ import { Alert, App as AntApp, Button, Col, Collapse, Flex, Grid, InputNumber, M
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import PhoneArt from "./PhoneArt";
 import { SpecsBody, WarrantyBody, WarrantyLabel } from "./Warranty";
-import { cop, gbLabel } from "../lib/format";
+import { cop, gbLabel, nameWith } from "../lib/format";
+import { hasCapacity } from "../lib/categories";
 import { priceOf, stockOf } from "../lib/catalog";
 import { FONT_DISPLAY } from "../theme";
 
@@ -29,7 +30,7 @@ export default function ProductModal({ product, catalog, cart, onClose }) {
 
   const add = () => {
     const n = cart.add(product.id, gb, color, q);
-    if (n > 0) { message.success(`${product.name} ${gbLabel(gb)} agregado al pedido`); onClose(); }
+    if (n > 0) { message.success(`${nameWith(product.name, gb)} agregado al pedido`); onClose(); }
   };
 
   const note = out ? "Esta capacidad está agotada."
@@ -55,7 +56,7 @@ export default function ProductModal({ product, catalog, cart, onClose }) {
         </Col>
         <Col xs={24} md={14}>
           <Flex vertical gap={16} style={{ padding: wide ? 20 : 16 }}>
-            <div>
+            {hasCapacity(product) && <div>
               <Typography.Text type="secondary" strong style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase" }}>Capacidad</Typography.Text>
               <div style={{ marginTop: 6 }}>
                 <Radio.Group
@@ -65,7 +66,7 @@ export default function ProductModal({ product, catalog, cart, onClose }) {
                   options={product.storages.map((s) => ({ label: gbLabel(s.gb), value: s.gb, disabled: s.stock === 0 }))}
                 />
               </div>
-            </div>
+            </div>}
             <div>
               <Typography.Text type="secondary" strong style={{ fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase" }}>Color · {colors[color][0]}</Typography.Text>
               <Flex wrap gap={8} style={{ marginTop: 6 }}>

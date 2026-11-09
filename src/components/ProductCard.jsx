@@ -2,6 +2,7 @@ import { Card, Flex, Tag, Typography, theme } from "antd";
 import PhoneArt from "./PhoneArt";
 import { cop, gbLabel } from "../lib/format";
 import { fromPrice, totalStock } from "../lib/catalog";
+import { hasCapacity } from "../lib/categories";
 import { FONT_DISPLAY } from "../theme";
 
 export default function ProductCard({ product: p, catalog, compact, onOpen }) {
@@ -44,7 +45,7 @@ export default function ProductCard({ product: p, catalog, compact, onOpen }) {
     >
       <Flex vertical gap={2}>
         <Typography.Text strong style={{ fontFamily: FONT_DISPLAY, fontSize: compact ? 15 : 18 }}>{p.name}</Typography.Text>
-        <Typography.Text type="secondary" style={{ fontSize: 13 }}>{p.storages.map((s) => gbLabel(s.gb)).join(" · ")}</Typography.Text>
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>{hasCapacity(p) ? p.storages.map((s) => gbLabel(s.gb)).join(" · ") : p.line}</Typography.Text>
         <Typography.Text strong style={{ fontSize: compact ? 15 : 17, marginTop: 4, fontVariantNumeric: "tabular-nums" }}>
           Desde {cop(fromPrice(p), shop.currency)}
         </Typography.Text>

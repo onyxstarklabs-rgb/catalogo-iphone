@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "./supabase";
+import { CATEGORY_BY_KEY } from "./categories";
 
 const url = (name) => `${import.meta.env.BASE_URL}data/${name}.json`;
 
@@ -17,6 +18,7 @@ export function validate({ shop, colors, warr, products }) {
   for (const p of products) {
     if (!p || typeof p.id !== "string") { err.push("modelo sin id"); continue; }
     if (!warr[p.warr]) err.push(`${p.id}: garantía "${p.warr}" no existe`);
+    if (!CATEGORY_BY_KEY[p.category]) err.push(`${p.id}: categoría "${p.category}" no existe`);
     if (!Array.isArray(p.colors) || p.colors.length === 0) { err.push(`${p.id}: sin colores`); continue; }
     if (!Array.isArray(p.storages) || p.storages.length === 0) { err.push(`${p.id}: sin capacidades`); continue; }
     for (const c of p.colors) if (!colors[c]) err.push(`${p.id}: color "${c}" no existe`);
@@ -61,7 +63,7 @@ function applyRemote(base, shopRow, stockRows, customRows, imageRows) {
   // Productos creados desde el panel: se ignoran los que no pasen la validación (nunca tumban el catálogo).
   const custom = (customRows || [])
     .map((c) => ({
-      id: c.id, name: c.name, line: c.line, cond: c.cond, warr: c.warr, colors: c.colors, specs: validSpecs(c.specs), custom: true,
+      id: c.id, name: c.name, category: c.category, line: c.line, cond: c.cond, warr: c.warr, colors: c.colors, specs: validSpecs(c.specs), custom: true,
       storages: (stockRows || []).filter((r) => r.product_id === c.id).map(({ gb, price, stock }) => ({ gb, price, stock })).sort((x, y) => x.gb - y.gb)
     }))
     .filter((p) => validate({ ...merged, products: [p] }).length === 0);
@@ -83,7 +85,8 @@ async function fetchRemote() {
 }
 
 async function loadCatalog() {
-  const [shop, colors, warr, products] = await Promise.all(["shop", "colors", "warranties", "products"].map(getJSON));
+  const [shop, colors, warr, rawProducts] = await Promise.all(["shop", "colors", "warranties", "products"].map(getJSON));
+  const products = rawProducts.map((p) => ({ category: "iphone", ...p }));
   const problems = validate({ shop, colors, warr, products });
   if (problems.length) throw new Error(problems.join(" · "));
   return { shop, colors, warr, products };
@@ -216,7 +219,7 @@ export function useCatalog() {
     if (oldPath) await supabase.storage.from(IMG_BUCKET).remove([oldPath]);
   };
 
-  const toRow = (f) => ({ name: f.name.trim(), line: f.line.trim(), cond: f.cond, warr: f.warr, colors: f.colors, specs: (f.specs || []).filter((x) => x && x.label && x.value).map((x) => [String(x.label).trim(), String(x.value).trim()]) });
+  const toRow = (f) => ({ category: f.category, name: f.name.trim(), line: f.line.trim(), cond: f.cond, warr: f.warr, colors: f.colors, specs: (f.specs || []).filter((x) => x && x.label && x.value).map((x) => [String(x.label).trim(), String(x.value).trim()]) });
   const stockRowsOf = (id, f) => f.storages.map((s) => ({ product_id: id, gb: s.gb, price: s.price, stock: s.stock }));
 
   const createProduct = useCallback((f, image) => run(async () => {

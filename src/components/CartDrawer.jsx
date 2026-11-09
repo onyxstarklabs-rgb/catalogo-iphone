@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, App as AntApp, Button, Drawer, Empty, Flex, Form, Grid, Input, InputNumber, Radio, Tag, Typography, theme } from "antd";
 import { CheckCircleOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons";
-import { cop, gbLabel } from "../lib/format";
+import { cop, nameWith } from "../lib/format";
 import { priceOf } from "../lib/catalog";
 import { buildOrderSummary, whatsappLink } from "../lib/cart";
 import { FONT_DISPLAY } from "../theme";
@@ -115,7 +115,7 @@ export default function CartDrawer({ open, onClose, catalog, cart, order, setOrd
             return (
               <div key={`${l.id}|${l.gb}|${l.color}`} style={{ border: `1px solid ${token.colorBorderSecondary}`, borderRadius: token.borderRadius, padding: 12, background: token.colorBgContainer }}>
                 <Flex justify="space-between" gap={12} align="start">
-                  <Typography.Text strong>{p.name} {gbLabel(l.gb)}</Typography.Text>
+                  <Typography.Text strong>{nameWith(p.name, l.gb)}</Typography.Text>
                   <Typography.Text style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{cop(priceOf(p, l.gb) * l.qty, shop.currency)}</Typography.Text>
                 </Flex>
                 <Flex align="center" gap={8} style={{ marginTop: 4 }}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { cop, gbLabel } from "./format";
+import { cop, nameWith } from "./format";
 import { priceOf, stockOf } from "./catalog";
 
 const KEY = "catalogo-carrito-v1";
@@ -61,7 +61,7 @@ export function buildOrderSummary(catalog, lines, total, name, delivery, code) {
   const { shop, byId, colors, warr } = catalog;
   const rows = lines.map((l) => {
     const p = byId[l.id];
-    return `• ${l.qty} × ${p.name} ${gbLabel(l.gb)} ${colors[l.color][0]} (${p.cond}, garantía ${warr[p.warr].months} meses) — ${cop(priceOf(p, l.gb) * l.qty, shop.currency)}`;
+    return `• ${l.qty} × ${nameWith(p.name, l.gb)} ${colors[l.color][0]} (${p.cond}, garantía ${warr[p.warr].months} meses) — ${cop(priceOf(p, l.gb) * l.qty, shop.currency)}`;
   });
   const header = code ? `ORDEN DE RESERVA #${code} · ${shop.name}` : `Hola ${shop.name}, quiero hacer este pedido:`;
   return `${header}\n${rows.join("\n")}\nTotal: ${cop(total, shop.currency)}\nCliente: ${name.trim()}\nEntrega: ${delivery}`;

@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { theme } from "antd";
+import { AppstoreOutlined, CustomerServiceOutlined, LaptopOutlined } from "@ant-design/icons";
 
 /**
  * Foto subida desde el panel (imageUrl), luego img/<id>-<color>.jpg y img/<id>.jpg;
  * si no, el equipo se dibuja con el color elegido. Usar `key={color}` para reiniciar al cambiar de color.
  */
+const CATEGORY_ICON = { mac: LaptopOutlined, airpods: CustomerServiceOutlined, accesorios: AppstoreOutlined };
+
 export default function PhoneArt({ product, color, colorName, hex, ratio, height, flat, children }) {
   const { token } = theme.useToken();
   const [step, setStep] = useState(0);
@@ -15,7 +18,9 @@ export default function PhoneArt({ product, color, colorName, hex, ratio, height
 
   return (
     <div style={{ position: "relative", background: flat ? "transparent" : token.colorFillSecondary, display: "grid", placeItems: "center", overflow: "hidden", aspectRatio: ratio, height }}>
-      {!loaded && <div className="phone" style={{ "--c": hex }} role="img" aria-label={`${product.name} ${colorName}`} />}
+      {!loaded && (CATEGORY_ICON[product.category]
+        ? (() => { const Icon = CATEGORY_ICON[product.category]; return <Icon role="img" aria-label={product.name} style={{ fontSize: 44, color: token.colorTextQuaternary }} />; })()
+        : <div className="phone" style={{ "--c": hex }} role="img" aria-label={`${product.name} ${colorName}`} />)}
       {src && (
         <img
           key={src}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, App as AntApp, Button, Col, Empty, FloatButton, Flex, Form, Grid, Input, Modal, Row, Skeleton, Typography, theme } from "antd";
+import { Alert, App as AntApp, Button, Col, Empty, FloatButton, Flex, Form, Grid, Input, Modal, Row, Select, Skeleton, Switch, Typography, theme } from "antd";
 import { LockOutlined, SearchOutlined, SettingOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import ProductCard from "./components/ProductCard";
 import ProductModal from "./components/ProductModal";
@@ -8,6 +8,8 @@ import AdminDrawer from "./components/AdminDrawer";
 import { useCatalog } from "./lib/catalog";
 import { useCart } from "./lib/cart";
 import { useOwner } from "./lib/auth";
+import { CATEGORIES } from "./lib/categories";
+import { totalStock } from "./lib/catalog";
 import { FONT_DISPLAY } from "./theme";
 
 const GUTTER = [{ xs: 10, md: 16 }, { xs: 10, md: 16 }];
@@ -19,9 +21,11 @@ function Shop({ catalog }) {
   const screens = Grid.useBreakpoint();
   const compact = !screens.md;
   const cart = useCart(catalog);
-  const { shop, lines, products } = catalog;
+  const { shop, products } = catalog;
 
+  const [category, setCategory] = useState("Todos");
   const [line, setLine] = useState("Todos");
+  const [onlyStock, setOnlyStock] = useState(false);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -84,12 +88,22 @@ function Shop({ catalog }) {
     message.info("Modo propietario cerrado (vista pública activa)");
   };
 
+  const inStock = (p) => totalStock(p) > 0;
+  const categoryOptions = useMemo(() => [
+    { value: "Todos", label: `Todos (${products.filter(inStock).length})` },
+    ...CATEGORIES.map((c) => ({ value: c.key, label: `${c.label} (${products.filter((p) => p.category === c.key && inStock(p)).length})` }))
+  ], [products]);
+  const lineOptions = useMemo(() => {
+    const ls = [...new Set(products.filter((p) => p.category === category).map((p) => p.line))];
+    return ls.length > 1 ? [{ value: "Todos", label: "Todas las líneas" }, ...ls.map((l) => ({ value: l, label: l }))] : [];
+  }, [products, category]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return products.filter((p) => (line === "Todos" || p.line === line) && (!q || [
-      p.name, p.cond, ...p.colors.map((c) => catalog.colors[c][0]), ...p.storages.map((s) => `${s.gb} gb`)
-    ].join(" ").toLowerCase().includes(q)));
-  }, [products, line, query, catalog.colors]);
+    return products.filter((p) => (category === "Todos" || p.category === category) && (line === "Todos" || p.line === line)
+      && (!onlyStock || inStock(p))
+      && (!q || [p.name, p.line, p.cond, ...p.colors.map((c) => catalog.colors[c][0]), ...p.storages.filter((s) => s.gb > 0).map((s) => `${s.gb} gb`)].join(" ").toLowerCase().includes(q)));
+  }, [products, category, line, onlyStock, query, catalog.colors]);
 
   return (
     <>
@@ -133,17 +147,29 @@ function Shop({ catalog }) {
           <Typography.Paragraph type="secondary" style={{ maxWidth: "52ch", marginTop: 12 }}>{shop.sub}</Typography.Paragraph>
         </section>
 
-        <Flex wrap gap={8} role="group" aria-label="Filtrar por línea" style={{ padding: "14px 0 6px" }}>
-          {lines.map((l) => (
-            <Button key={l} shape="round" type={l === line ? "primary" : "default"} aria-pressed={l === line} onClick={() => setLine(l)}>{l}</Button>
-          ))}
+        <Flex wrap gap={10} align="center" role="group" aria-label="Filtros" style={{ padding: "14px 0 6px" }}>
+          <Select
+            aria-label="Categoría"
+            value={category}
+            options={categoryOptions}
+            onChange={(v) => { setCategory(v); setLine("Todos"); }}
+            style={{ flex: "1 1 160px", maxWidth: 240 }}
+            size="large"
+          />
+          {lineOptions.length > 0 && (
+            <Select aria-label="Línea" value={line} options={lineOptions} onChange={setLine} style={{ flex: "1 1 160px", maxWidth: 240 }} size="large" />
+          )}
+          <Flex align="center" gap={8}>
+            <Switch id="solo-stock" checked={onlyStock} onChange={setOnlyStock} aria-label="Solo con stock" />
+            <label htmlFor="solo-stock" style={{ cursor: "pointer" }}>Solo con stock</label>
+          </Flex>
         </Flex>
         <Typography.Text type="secondary" style={{ display: "block", fontSize: 13, padding: "6px 0 14px" }} aria-live="polite">
           {visible.length ? `${visible.length} ${visible.length === 1 ? "modelo" : "modelos"}` : ""}
         </Typography.Text>
 
         {visible.length === 0 ? (
-          <Empty description="No encontramos ese modelo. Prueba con otro nombre o consulta disponibilidad en el local." />
+          <Empty description={onlyStock ? "No hay productos con stock en esta selección." : "No encontramos productos con esos filtros. Prueba con otra búsqueda o consulta disponibilidad en el local."} />
         ) : (
           <Row gutter={GUTTER}>
             {visible.map((p) => (

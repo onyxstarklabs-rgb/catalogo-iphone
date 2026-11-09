@@ -79,8 +79,9 @@ Sin configurar nada, el catálogo funciona solo con los JSON (modo estático, si
 2. En Authentication crea el usuario del dueño (correo y contraseña) y agrégalo a `owners`: `insert into public.owners (user_id) values ('<uuid del usuario>');`
 3. Variables de entorno (local en `.env.local`, en Vercel en Settings → Environment Variables): `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Ver `.env.example`. La clave publicable es segura de exponer; la `service_role` nunca va en el front.
 4. Añade el dominio del proyecto a `connect-src` e `img-src` en `vercel.json` y `public/_headers`.
-5. El panel permite crear, editar y eliminar productos nuevos y subir fotos (bucket `product-images` de Supabase Storage, público para leer, solo el dueño escribe, se aceptan fotos de hasta 15 MB y se optimizan en el navegador a máx. 1600 px (el archivo publicado pesa menos de 2 MB, tope del bucket)). Aplica la migración con las tablas `custom_products` y `product_images` y sus políticas RLS.
-6. Los JSON siguen definiendo la estructura (modelos, colores, fichas) y sirven de respaldo si la base no responde. Acceso al panel: `?admin` o 5 clics en el logo.
+5. Categorías: iPhones, Accesorios, Mac y AirPods (selector con el conteo de productos con stock, selector de línea y filtro "Solo con stock"). Accesorios y AirPods se venden sin capacidad. Aplica la migración que agrega `category` a `custom_products` y permite `gb = 0` en `stock`.
+6. El panel permite crear, editar y eliminar productos nuevos y subir fotos (bucket `product-images` de Supabase Storage, público para leer, solo el dueño escribe, se aceptan fotos de hasta 15 MB y se optimizan en el navegador a máx. 1600 px (el archivo publicado pesa menos de 2 MB, tope del bucket)). Aplica la migración con las tablas `custom_products` y `product_images` y sus políticas RLS.
+7. Los JSON siguen definiendo la estructura (modelos, colores, fichas) y sirven de respaldo si la base no responde. Acceso al panel: `?admin` o 5 clics en el logo.
 
 ## Pendiente
 

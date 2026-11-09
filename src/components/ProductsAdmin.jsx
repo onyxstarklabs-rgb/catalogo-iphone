@@ -4,6 +4,7 @@ import { DeleteOutlined, PictureOutlined, PlusOutlined } from "@ant-design/icons
 import PhoneArt from "./PhoneArt";
 import { prepareImage } from "../lib/image";
 import { cop, gbLabel } from "../lib/format";
+import { CATEGORIES, CATEGORY_BY_KEY } from "../lib/categories";
 import { FONT_DISPLAY } from "../theme";
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
@@ -40,6 +41,8 @@ function PhotoPicker({ value, onChange, current }) {
 function ProductFormModal({ open, onClose, catalog, editing }) {
   const { message } = AntApp.useApp();
   const [form] = Form.useForm();
+  const category = Form.useWatch("category", form) ?? editing?.category ?? "iphone";
+  const withCapacity = CATEGORY_BY_KEY[category].storage;
   const [image, setImage] = useState(null);
   const [busy, setBusy] = useState(false);
   const { colors, warr, products, createProduct, updateProduct } = catalog;
@@ -47,8 +50,8 @@ function ProductFormModal({ open, onClose, catalog, editing }) {
   const lines = [...new Set(products.map((p) => p.line))];
   const conds = [...new Set(["Nuevo", "Reacondicionado A", "Reacondicionado B", ...products.map((p) => p.cond)])];
   const initial = editing
-    ? { name: editing.name, line: editing.line, cond: editing.cond, warr: editing.warr, colors: editing.colors, storages: editing.storages, specs: editing.specs.map(([label, value]) => ({ label, value })) }
-    : { cond: "Nuevo", warr: Object.keys(warr)[0], colors: [], storages: [{ gb: 128, price: 1000000, stock: 1 }], specs: [] };
+    ? { name: editing.name, category: editing.category, line: editing.line, cond: editing.cond, warr: editing.warr, colors: editing.colors, storages: editing.storages, specs: editing.specs.map(([label, value]) => ({ label, value })) }
+    : { category: "iphone", cond: "Nuevo", warr: Object.keys(warr)[0], colors: [], storages: [{ gb: 128, price: 1000000, stock: 1 }], specs: [] };
 
   const submit = async (values) => {
     setBusy(true);
@@ -73,13 +76,24 @@ function ProductFormModal({ open, onClose, catalog, editing }) {
       destroyOnHidden
       width={620}
     >
-      <Form form={form} layout="vertical" requiredMark={false} initialValues={initial} onFinish={submit} style={{ marginTop: 12 }}>
+      <Form form={form} layout="vertical" requiredMark={false} initialValues={initial} onFinish={submit} style={{ marginTop: 12 }}
+        onValuesChange={(changed, all) => {
+          if (!changed.category) return;
+          const first = all.storages?.[0] ?? { price: 1000000, stock: 1 };
+          form.setFieldValue("storages", CATEGORY_BY_KEY[changed.category].storage
+            ? [{ gb: all.storages?.[0]?.gb > 0 ? all.storages[0].gb : 128, price: first.price, stock: first.stock }]
+            : [{ gb: 0, price: first.price, stock: first.stock }]);
+        }}
+      >
+        <Form.Item name="category" label="Categoría" rules={[{ required: true }]}>
+          <Select options={CATEGORIES.map((c) => ({ value: c.key, label: c.label }))} />
+        </Form.Item>
         <Form.Item name="name" label="Nombre" rules={[{ required: true, whitespace: true, message: "Escribe el nombre" }, { max: 80, message: "Máximo 80 caracteres" }]}>
-          <Input maxLength={80} placeholder="iPhone 16 Pro 256 GB" />
+          <Input maxLength={80} placeholder={withCapacity ? "iPhone 16 Pro" : "AirPods Pro"} />
         </Form.Item>
         <Flex gap={12} wrap>
           <Form.Item name="line" label="Línea (filtro del catálogo)" rules={[{ required: true, whitespace: true, message: "Elige o escribe una línea" }, { max: 40, message: "Máximo 40 caracteres" }]} style={{ flex: "1 1 220px" }}>
-            <AutoComplete options={lines.map((l) => ({ value: l }))} maxLength={40} placeholder="iPhone 16" />
+            <AutoComplete options={lines.map((l) => ({ value: l }))} maxLength={40} placeholder={withCapacity ? "iPhone 16" : "AirPods"} />
           </Form.Item>
           <Form.Item name="cond" label="Condición" rules={[{ required: true }]} style={{ flex: "1 1 180px" }}>
             <Select options={conds.map((c) => ({ value: c, label: c }))} />
@@ -98,6 +112,22 @@ function ProductFormModal({ open, onClose, catalog, editing }) {
           />
         </Form.Item>
 
+        {!withCapacity && (
+          <>
+            <Typography.Text strong>Precio y stock</Typography.Text>
+            <Flex gap={8} wrap style={{ marginTop: 8, marginBottom: 16 }}>
+              <Form.Item name={["storages", 0, "gb"]} hidden><InputNumber /></Form.Item>
+              <Form.Item name={["storages", 0, "price"]} rules={[{ required: true, message: "Precio" }]} style={{ marginBottom: 0 }}>
+                <InputNumber aria-label="Precio en pesos" min={1000} max={99999999} precision={0} step={10000} addonBefore="$" style={{ width: 180 }} />
+              </Form.Item>
+              <Form.Item name={["storages", 0, "stock"]} rules={[{ required: true, message: "Stock" }]} style={{ marginBottom: 0 }}>
+                <InputNumber aria-label="Unidades en stock" min={0} max={999} precision={0} addonAfter="uds" style={{ width: 130 }} />
+              </Form.Item>
+            </Flex>
+          </>
+        )}
+        {withCapacity && (
+          <>
         <Typography.Text strong>Capacidades, precio y stock</Typography.Text>
         <Form.List name="storages">
           {(fields, { add, remove }) => (
@@ -120,6 +150,9 @@ function ProductFormModal({ open, onClose, catalog, editing }) {
             </Flex>
           )}
         </Form.List>
+
+          </>
+        )}
 
         <Typography.Text strong>Ficha técnica (opcional)</Typography.Text>
         <Form.List name="specs">
@@ -200,7 +233,7 @@ export default function ProductsAdmin({ catalog }) {
               <Typography.Text strong style={{ fontFamily: FONT_DISPLAY }}>{p.name}</Typography.Text>
               {p.custom && <Tag style={{ margin: 0 }}>Nuevo en panel</Tag>}
             </Flex>
-            <Typography.Text type="secondary" style={{ fontSize: 12 }}>{p.line} · {p.storages.map((s) => `${gbLabel(s.gb)} ${cop(s.price, shop.currency)}`).slice(0, 2).join(" · ")}{p.storages.length > 2 ? "…" : ""}</Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>{CATEGORY_BY_KEY[p.category].label} · {p.line} · {p.storages.map((s) => `${s.gb > 0 ? `${gbLabel(s.gb)} ` : ""}${cop(s.price, shop.currency)}`).slice(0, 2).join(" · ")}{p.storages.length > 2 ? "…" : ""}</Typography.Text>
           </Flex>
           <Flex gap={6} wrap>
             <Upload accept={ACCEPT} showUploadList={false} beforeUpload={(file) => { changePhoto(p, file); return false; }}>
