@@ -4,6 +4,7 @@ import { DownloadOutlined, ReloadOutlined } from "@ant-design/icons";
 import { cop, gbLabel } from "../lib/format";
 import { totalStock } from "../lib/catalog";
 import { FONT_DISPLAY } from "../theme";
+import ProductsAdmin from "./ProductsAdmin";
 
 function downloadJson(filename, obj) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
@@ -322,6 +323,7 @@ export default function AdminDrawer({ open, onClose, catalog }) {
       <Tabs
         items={[
           { key: "stock", label: "Stock y precios", children: stockTab },
+          { key: "products", label: "Productos y fotos", children: <ProductsAdmin catalog={catalog} /> },
           { key: "shop", label: "Datos del local", children: shopTab },
           {
             key: "addon",

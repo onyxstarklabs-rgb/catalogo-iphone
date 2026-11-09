@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, App as AntApp, Badge, Button, Col, Empty, Flex, Form, Grid, Input, Modal, Row, Skeleton, Typography, theme } from "antd";
+import { Alert, App as AntApp, Button, Col, Empty, FloatButton, Flex, Form, Grid, Input, Modal, Row, Skeleton, Typography, theme } from "antd";
 import { LockOutlined, SearchOutlined, SettingOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import ProductCard from "./components/ProductCard";
 import ProductModal from "./components/ProductModal";
@@ -121,9 +121,6 @@ function Shop({ catalog }) {
                 {compact ? "Admin" : "Panel del local"}
               </Button>
             )}
-            <Badge count={cart.count} color={token.colorPrimary} offset={[-4, 4]}>
-              <Button type="primary" icon={<ShoppingCartOutlined />} onClick={() => setCartOpen(true)}>Mi pedido</Button>
-            </Badge>
           </Flex>
         </Flex>
       </header>
@@ -194,6 +191,16 @@ function Shop({ catalog }) {
           </Form.Item>
         </Form>
       </Modal>
+
+      <FloatButton
+        type="primary"
+        icon={<ShoppingCartOutlined />}
+        badge={{ count: cart.count, overflowCount: 99 }}
+        tooltip="Mi pedido"
+        aria-label="Mi pedido"
+        onClick={() => setCartOpen(true)}
+        style={{ insetInlineEnd: "max(20px, env(safe-area-inset-right, 0px))", insetBlockEnd: "calc(20px + env(safe-area-inset-bottom, 0px))", width: 56, height: 56 }}
+      />
 
       {openId && <ProductModal key={openId} product={catalog.byId[openId]} catalog={catalog} cart={cart} onClose={() => setOpenId(null)} />}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} catalog={catalog} cart={cart} order={order} setOrder={setOrder} />

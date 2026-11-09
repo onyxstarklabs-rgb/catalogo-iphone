@@ -28,7 +28,7 @@ function Root() {
   const dark = useDarkMode();
   return (
     <ConfigProvider prefixCls="cat" iconPrefixCls="cat-icon" locale={esES} theme={buildTheme(dark)}>
-      <AntApp>
+      <AntApp message={{ maxCount: 2, duration: 1.6 }}>
         <ThemeSync dark={dark} />
         <CatalogApp />
       </AntApp>

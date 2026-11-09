@@ -2,7 +2,7 @@ import { useState } from "react";
 import { theme } from "antd";
 
 /**
- * Foto real si existe el archivo (img/<id>-<color>.jpg, luego img/<id>.jpg);
+ * Foto subida desde el panel (imageUrl), luego img/<id>-<color>.jpg y img/<id>.jpg;
  * si no, el equipo se dibuja con el color elegido. Usar `key={color}` para reiniciar al cambiar de color.
  */
 export default function PhoneArt({ product, color, colorName, hex, ratio, height, flat, children }) {
@@ -10,7 +10,8 @@ export default function PhoneArt({ product, color, colorName, hex, ratio, height
   const [step, setStep] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const base = import.meta.env.BASE_URL;
-  const src = step === 0 ? `${base}img/${product.id}-${color}.jpg` : step === 1 ? `${base}img/${product.id}.jpg` : null;
+  const sources = [product.imageUrl, `${base}img/${product.id}-${color}.jpg`, `${base}img/${product.id}.jpg`].filter(Boolean);
+  const src = sources[step] || null;
 
   return (
     <div style={{ position: "relative", background: flat ? "transparent" : token.colorFillSecondary, display: "grid", placeItems: "center", overflow: "hidden", aspectRatio: ratio, height }}>

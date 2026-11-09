@@ -38,8 +38,13 @@ const shopToRow = (patch) => Object.fromEntries(Object.entries(patch).filter(([k
  * Los datos en vivo (precio, stock y textos del local) viven en Supabase; la estructura (nombres, colores, fichas)
  * siempre viene de los JSON del deploy. Lo que no exista o sea inválido en la base se ignora y queda el valor del JSON.
  */
-function applyRemote(base, shopRow, stockRows) {
+const IMG_BUCKET = "product-images";
+const imageUrl = (path) => supabase.storage.from(IMG_BUCKET).getPublicUrl(path).data.publicUrl;
+const validSpecs = (specs) => (Array.isArray(specs) ? specs.filter((x) => Array.isArray(x) && typeof x[0] === "string" && typeof x[1] === "string").slice(0, 10) : []);
+
+function applyRemote(base, shopRow, stockRows, customRows, imageRows) {
   const live = new Map((stockRows || []).map((r) => [`${r.product_id}|${r.gb}`, r]));
+  const images = new Map((imageRows || []).map((r) => [r.product_id, r.path]));
   const merged = {
     ...base,
     shop: shopRow ? { ...base.shop, ...shopFromRow(shopRow) } : base.shop,
@@ -51,16 +56,30 @@ function applyRemote(base, shopRow, stockRows) {
       })
     }))
   };
-  return validate(merged).length === 0 ? merged : base;
+  if (validate(merged).length !== 0) return base;
+
+  // Productos creados desde el panel: se ignoran los que no pasen la validación (nunca tumban el catálogo).
+  const custom = (customRows || [])
+    .map((c) => ({
+      id: c.id, name: c.name, line: c.line, cond: c.cond, warr: c.warr, colors: c.colors, specs: validSpecs(c.specs), custom: true,
+      storages: (stockRows || []).filter((r) => r.product_id === c.id).map(({ gb, price, stock }) => ({ gb, price, stock })).sort((x, y) => x.gb - y.gb)
+    }))
+    .filter((p) => validate({ ...merged, products: [p] }).length === 0);
+
+  const products = [...merged.products, ...custom].map((p) => (images.has(p.id) ? { ...p, imageUrl: imageUrl(images.get(p.id)), imagePath: images.get(p.id) } : p));
+  return { ...merged, products };
 }
 
 async function fetchRemote() {
-  const [shop, stock] = await Promise.all([
+  const [shop, stock, custom, images] = await Promise.all([
     supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle(),
-    supabase.from("stock").select("product_id,gb,price,stock")
+    supabase.from("stock").select("product_id,gb,price,stock"),
+    supabase.from("custom_products").select("*").order("created_at"),
+    supabase.from("product_images").select("product_id,path")
   ]);
-  if (shop.error || stock.error) throw new Error((shop.error || stock.error).message);
-  return { shop: shop.data, stock: stock.data };
+  const failed = shop.error || stock.error || custom.error || images.error;
+  if (failed) throw new Error(failed.message);
+  return { shop: shop.data, stock: stock.data, custom: custom.data, images: images.data };
 }
 
 async function loadCatalog() {
@@ -85,7 +104,7 @@ export function useCatalog() {
     if (!supabase || !baseRef.current) return;
     try {
       const r = await fetchRemote();
-      setCurrent(applyRemote(baseRef.current, r.shop, r.stock));
+      setCurrent(applyRemote(baseRef.current, r.shop, r.stock, r.custom, r.images));
     } catch { /* se mantiene lo que hay en pantalla */ }
   }, []);
 
@@ -98,7 +117,7 @@ export function useCatalog() {
         setBase(loaded);
         let next = loaded;
         if (supabase) {
-          try { const r = await fetchRemote(); next = applyRemote(loaded, r.shop, r.stock); } catch { /* sin conexión a la base: se usa el JSON */ }
+          try { const r = await fetchRemote(); next = applyRemote(loaded, r.shop, r.stock, r.custom, r.images); } catch { /* sin conexión a la base: se usa el JSON */ }
         }
         if (alive) setCurrent(next);
       },
@@ -118,6 +137,8 @@ export function useCatalog() {
     const channel = supabase.channel("catalogo-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, onChange)
       .on("postgres_changes", { event: "*", schema: "public", table: "shop_settings" }, onChange)
+      .on("postgres_changes", { event: "*", schema: "public", table: "custom_products" }, onChange)
+      .on("postgres_changes", { event: "*", schema: "public", table: "product_images" }, onChange)
       .subscribe();
     return () => { clearTimeout(timer); supabase.removeChannel(channel); };
   }, [base, resync]);
@@ -174,6 +195,76 @@ export function useCatalog() {
     if (p) p.storages.forEach((s) => updateStorage(productId, s.gb, { stock: stockValue }));
   }, [current, updateStorage]);
 
+  const newId = () => `c-${Array.from(crypto.getRandomValues(new Uint8Array(8)), (n) => "abcdefghijklmnopqrstuvwxyz0123456789"[n % 36]).join("")}`;
+
+  /** Ejecuta una operación contra Supabase y devuelve { ok, error } sin lanzar; refresca el catálogo al terminar. */
+  const run = useCallback(async (fn) => {
+    try { await fn(); await resync(); return { ok: true }; }
+    catch (e) { await resync(); return { ok: false, error: e.message || "Error de red" }; }
+  }, [resync]);
+  const must = ({ error: err }) => { if (err) throw new Error(err.message); };
+
+  const putImage = async (productId, image, oldPath) => {
+    const path = `${productId}/${crypto.randomUUID()}.${image.ext}`;
+    must(await supabase.storage.from(IMG_BUCKET).upload(path, image.blob, { contentType: image.contentType, cacheControl: "31536000", upsert: false }));
+    try {
+      must(await supabase.from("product_images").upsert({ product_id: productId, path, updated_at: new Date().toISOString() }));
+    } catch (e) {
+      await supabase.storage.from(IMG_BUCKET).remove([path]);
+      throw e;
+    }
+    if (oldPath) await supabase.storage.from(IMG_BUCKET).remove([oldPath]);
+  };
+
+  const toRow = (f) => ({ name: f.name.trim(), line: f.line.trim(), cond: f.cond, warr: f.warr, colors: f.colors, specs: (f.specs || []).filter((x) => x && x.label && x.value).map((x) => [String(x.label).trim(), String(x.value).trim()]) });
+  const stockRowsOf = (id, f) => f.storages.map((s) => ({ product_id: id, gb: s.gb, price: s.price, stock: s.stock }));
+
+  const createProduct = useCallback((f, image) => run(async () => {
+    const id = newId();
+    must(await supabase.from("custom_products").insert({ id, ...toRow(f) }));
+    try {
+      must(await supabase.from("stock").insert(stockRowsOf(id, f)));
+      if (image) await putImage(id, image, null);
+    } catch (e) {
+      await supabase.from("stock").delete().eq("product_id", id);
+      await supabase.from("custom_products").delete().eq("id", id);
+      throw e;
+    }
+  }), [run]);
+
+  const updateProduct = useCallback((id, f, image) => run(async () => {
+    const cur = current.products.find((p) => p.id === id);
+    if (!cur || !cur.custom) throw new Error("Solo se pueden editar los productos creados desde el panel");
+    must(await supabase.from("custom_products").update(toRow(f)).eq("id", id).select("id").single());
+    const keep = new Set(f.storages.map((s) => s.gb));
+    const removed = cur.storages.map((s) => s.gb).filter((gb) => !keep.has(gb));
+    if (removed.length) must(await supabase.from("stock").delete().eq("product_id", id).in("gb", removed));
+    must(await supabase.from("stock").upsert(stockRowsOf(id, f)));
+    if (image) await putImage(id, image, cur.imagePath);
+  }), [run, current]);
+
+  const deleteProduct = useCallback((id) => run(async () => {
+    const cur = current.products.find((p) => p.id === id);
+    if (!cur || !cur.custom) throw new Error("Solo se pueden eliminar los productos creados desde el panel");
+    must(await supabase.from("stock").delete().eq("product_id", id));
+    must(await supabase.from("product_images").delete().eq("product_id", id));
+    must(await supabase.from("custom_products").delete().eq("id", id));
+    if (cur.imagePath) await supabase.storage.from(IMG_BUCKET).remove([cur.imagePath]);
+  }), [run, current]);
+
+  const setProductImage = useCallback((id, image) => run(async () => {
+    const cur = current.products.find((p) => p.id === id);
+    if (!cur) throw new Error("Producto no encontrado");
+    await putImage(id, image, cur.imagePath);
+  }), [run, current]);
+
+  const removeProductImage = useCallback((id) => run(async () => {
+    const cur = current.products.find((p) => p.id === id);
+    if (!cur || !cur.imagePath) return;
+    must(await supabase.from("product_images").delete().eq("product_id", id));
+    await supabase.storage.from(IMG_BUCKET).remove([cur.imagePath]);
+  }), [run, current]);
+
   const resetOverrides = useCallback(() => {
     if (!base) return;
     setCurrent(base);
@@ -198,9 +289,14 @@ export function useCatalog() {
       updateShop,
       updateStorage,
       setProductStock,
-      resetOverrides
+      resetOverrides,
+      createProduct,
+      updateProduct,
+      deleteProduct,
+      setProductImage,
+      removeProductImage
     };
-  }, [current, hasOverrides, sync, updateShop, updateStorage, setProductStock, resetOverrides]);
+  }, [current, hasOverrides, sync, updateShop, updateStorage, setProductStock, resetOverrides, createProduct, updateProduct, deleteProduct, setProductImage, removeProductImage]);
 
   if (error) return { status: "error", data: null, error };
   if (!data) return { status: "loading", data: null, error: null };
