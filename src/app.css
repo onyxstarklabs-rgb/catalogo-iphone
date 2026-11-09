@@ -1,0 +1,40 @@
+/* Solo estilos propios que el tema de Ant Design no cubre. Los colores salen de los tokens
+   del tema (src/theme.js) y se pasan por la prop style; aquí no hay colores de marca. */
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+
+/* Primer pintado, antes de que React monte y el tema se aplique */
+html { background: #ffffff; }
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.phone {
+  height: 78%;
+  aspect-ratio: 9 / 18.5;
+  border-radius: 16% / 8%;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--c) 85%, white), var(--c) 45%, color-mix(in srgb, var(--c) 70%, black));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, .22), inset 0 0 0 2px rgba(255, 255, 255, .18);
+  position: relative;
+}
+.phone::after {
+  content: "";
+  position: absolute;
+  top: 5%;
+  left: 8%;
+  width: 36%;
+  aspect-ratio: 1;
+  border-radius: 26%;
+  background: rgba(0, 0, 0, .28);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .15);
+}
+.swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0, 0, 0, .25); flex: none; }
+.tight-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.sticky-top { position: sticky; top: 0; z-index: 10; padding-top: env(safe-area-inset-top, 0px); }

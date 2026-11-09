@@ -1,0 +1,25 @@
+{
+  "name": "catalogo-template",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Catálogo web estático para tiendas locales (React + Ant Design, sin backend)",
+  "scripts": {
+    "dev": "vite",
+    "validate": "node scripts/validate-data.mjs",
+    "lint:antd": "node scripts/check-antd-rules.mjs",
+    "check": "npm run validate && npm run lint:antd",
+    "build": "npm run check && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "6.3.4",
+    "antd": "6.6.6",
+    "react": "19.2.9",
+    "react-dom": "19.2.9"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.5"
+  }
+}

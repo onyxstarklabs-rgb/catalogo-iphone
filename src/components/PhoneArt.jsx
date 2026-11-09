@@ -1,0 +1,31 @@
+import { useState } from "react";
+import { theme } from "antd";
+
+/**
+ * Foto real si existe el archivo (img/<id>-<color>.jpg, luego img/<id>.jpg);
+ * si no, el equipo se dibuja con el color elegido. Usar `key={color}` para reiniciar al cambiar de color.
+ */
+export default function PhoneArt({ product, color, colorName, hex, ratio, height, flat, children }) {
+  const { token } = theme.useToken();
+  const [step, setStep] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const base = import.meta.env.BASE_URL;
+  const src = step === 0 ? `${base}img/${product.id}-${color}.jpg` : step === 1 ? `${base}img/${product.id}.jpg` : null;
+
+  return (
+    <div style={{ position: "relative", background: flat ? "transparent" : token.colorFillSecondary, display: "grid", placeItems: "center", overflow: "hidden", aspectRatio: ratio, height }}>
+      {!loaded && <div className="phone" style={{ "--c": hex }} role="img" aria-label={`${product.name} ${colorName}`} />}
+      {src && (
+        <img
+          key={src}
+          src={src}
+          alt={`${product.name} ${colorName}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => { setLoaded(false); setStep((s) => s + 1); }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", padding: "6%", boxSizing: "border-box", opacity: loaded ? 1 : 0 }}
+        />
+      )}
+      {children}
+    </div>
+  );
+}

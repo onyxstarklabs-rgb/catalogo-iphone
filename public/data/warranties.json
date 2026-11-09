@@ -1,0 +1,71 @@
+{
+  "nuevo": {
+    "months": 12,
+    "who": "Garantía limitada de Apple",
+    "lead": "Equipo nuevo y sellado, con la garantía de fábrica de Apple por un año desde la compra.",
+    "covers": [
+      "Defectos de materiales y de mano de obra en el equipo y en los accesorios que vienen en la caja",
+      "Fallas de funcionamiento con uso normal del equipo",
+      "Reparación, reemplazo o reembolso, según decida Apple",
+      "Las piezas o equipos de reemplazo quedan cubiertos por el tiempo restante o por 90 días, lo que sea mayor"
+    ],
+    "excludes": [
+      "Golpes, caídas, pantalla rota o daños por líquidos",
+      "Rayones y abolladuras, salvo que sean consecuencia de un defecto",
+      "Desgaste normal, incluida la batería, salvo defecto de fabricación",
+      "Reparaciones o modificaciones hechas por terceros no autorizados",
+      "Software y equipos con número de serie borrado o con bloqueo de activación"
+    ],
+    "how": [
+      "Guarda la factura y el empaque",
+      "Escríbenos por WhatsApp con el modelo y la falla",
+      "Te acompañamos para llevarlo a un servicio autorizado de Apple"
+    ],
+    "note": "Basado en la Garantía limitada de un año de Apple."
+  },
+  "reacA": {
+    "months": 6,
+    "who": "Garantía del local",
+    "lead": "Equipo revisado y probado punto por punto, con 6 meses de garantía directamente con nosotros.",
+    "covers": [
+      "Fallas de pantalla táctil, cámaras, altavoces, micrófonos, Face ID, carga y botones",
+      "Batería: cambio sin costo si la salud baja de 80 % dentro de la garantía",
+      "Reparación o cambio por un equipo equivalente si no tiene arreglo",
+      "Revisión de diagnóstico sin costo"
+    ],
+    "excludes": [
+      "Golpes, caídas, pantalla rota o daños por líquidos",
+      "Equipos abiertos o reparados por terceros",
+      "Software modificado, jailbreak o cuenta de iCloud bloqueada por el usuario",
+      "Accesorios como cargadores, cables y fundas"
+    ],
+    "how": [
+      "Trae el equipo al local con la factura",
+      "Diagnóstico en máximo 3 días hábiles",
+      "Te avisamos si se repara o se cambia"
+    ],
+    "note": "Condiciones de ejemplo: el local las define y puede ajustarlas."
+  },
+  "reacB": {
+    "months": 3,
+    "who": "Garantía del local",
+    "lead": "Equipo revisado y probado, con 3 meses de garantía directamente con nosotros.",
+    "covers": [
+      "Fallas de funcionamiento de pantalla táctil, cámaras, altavoces, micrófonos y carga",
+      "Reparación o cambio por un equipo equivalente si no tiene arreglo",
+      "Revisión de diagnóstico sin costo"
+    ],
+    "excludes": [
+      "Golpes, caídas, pantalla rota o daños por líquidos",
+      "Desgaste de la batería",
+      "Equipos abiertos o reparados por terceros",
+      "Accesorios como cargadores, cables y fundas"
+    ],
+    "how": [
+      "Trae el equipo al local con la factura",
+      "Diagnóstico en máximo 3 días hábiles",
+      "Te avisamos si se repara o se cambia"
+    ],
+    "note": "Condiciones de ejemplo: el local las define y puede ajustarlas."
+  }
+}
