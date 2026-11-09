@@ -1,0 +1,719 @@
+[
+  {
+    "id": "i17pm",
+    "name": "iPhone 17 Pro Max",
+    "line": "iPhone 17",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "orange",
+      "deepblue",
+      "silver"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,9″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A19 Pro"
+      ],
+      [
+        "Cámara",
+        "Tres cámaras de 48 MP, teleobjetivo 4x y 8x"
+      ],
+      [
+        "Batería",
+        "Hasta 39 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 6899000,
+        "stock": 3
+      },
+      {
+        "gb": 512,
+        "price": 7899000,
+        "stock": 2
+      },
+      {
+        "gb": 1024,
+        "price": 8999000,
+        "stock": 1
+      },
+      {
+        "gb": 2048,
+        "price": 10999000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i17p",
+    "name": "iPhone 17 Pro",
+    "line": "iPhone 17",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "orange",
+      "deepblue",
+      "silver"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,3″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A19 Pro"
+      ],
+      [
+        "Cámara",
+        "Tres cámaras de 48 MP, teleobjetivo 4x y 8x"
+      ],
+      [
+        "Batería",
+        "Hasta 33 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 6199000,
+        "stock": 4
+      },
+      {
+        "gb": 512,
+        "price": 7199000,
+        "stock": 2
+      },
+      {
+        "gb": 1024,
+        "price": 8299000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "iair",
+    "name": "iPhone Air",
+    "line": "iPhone 17",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "spaceblack",
+      "cloud",
+      "gold",
+      "sky"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,5″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A19 Pro"
+      ],
+      [
+        "Cámara",
+        "Una cámara de 48 MP con zoom óptico 2x"
+      ],
+      [
+        "Batería",
+        "Hasta 27 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 5399000,
+        "stock": 2
+      },
+      {
+        "gb": 512,
+        "price": 6399000,
+        "stock": 1
+      },
+      {
+        "gb": 1024,
+        "price": 7399000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i17",
+    "name": "iPhone 17",
+    "line": "iPhone 17",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "lavender",
+      "mist",
+      "sage",
+      "black",
+      "white"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,3″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A19"
+      ],
+      [
+        "Cámara",
+        "48 MP Fusion y 48 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Hasta 30 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 4299000,
+        "stock": 6
+      },
+      {
+        "gb": 512,
+        "price": 5299000,
+        "stock": 3
+      }
+    ]
+  },
+  {
+    "id": "i16pm",
+    "name": "iPhone 16 Pro Max",
+    "line": "iPhone 16",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "tidesert",
+      "tinat",
+      "tiwhite",
+      "tiblack"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,9″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A18 Pro"
+      ],
+      [
+        "Cámara",
+        "48 MP + 48 MP ultra gran angular + 12 MP teleobjetivo 5x"
+      ],
+      [
+        "Batería",
+        "Hasta 33 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 5199000,
+        "stock": 2
+      },
+      {
+        "gb": 512,
+        "price": 6099000,
+        "stock": 1
+      },
+      {
+        "gb": 1024,
+        "price": 7099000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i16",
+    "name": "iPhone 16",
+    "line": "iPhone 16",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "black",
+      "white",
+      "pink",
+      "teal",
+      "ultra"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A18"
+      ],
+      [
+        "Cámara",
+        "48 MP Fusion y 12 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Hasta 22 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 3399000,
+        "stock": 5
+      },
+      {
+        "gb": 256,
+        "price": 3899000,
+        "stock": 3
+      },
+      {
+        "gb": 512,
+        "price": 4699000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i16e",
+    "name": "iPhone 16e",
+    "line": "iPhone 16",
+    "cond": "Nuevo",
+    "warr": "nuevo",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A18"
+      ],
+      [
+        "Cámara",
+        "Una cámara Fusion de 48 MP"
+      ],
+      [
+        "Batería",
+        "Hasta 26 h de video"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 2599000,
+        "stock": 6
+      },
+      {
+        "gb": 256,
+        "price": 2999000,
+        "stock": 2
+      },
+      {
+        "gb": 512,
+        "price": 3599000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i15pm",
+    "name": "iPhone 15 Pro Max",
+    "line": "iPhone 15",
+    "cond": "Reacondicionado A",
+    "warr": "reacA",
+    "colors": [
+      "tinat",
+      "tiwhite",
+      "tiblack",
+      "tiblue"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,7″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A17 Pro"
+      ],
+      [
+        "Cámara",
+        "48 MP + 12 MP ultra gran angular + 12 MP teleobjetivo 5x"
+      ],
+      [
+        "Batería",
+        "Salud de 90 % o más"
+      ],
+      [
+        "Estado",
+        "Carcasa y pantalla sin marcas visibles"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 256,
+        "price": 3899000,
+        "stock": 2
+      },
+      {
+        "gb": 512,
+        "price": 4499000,
+        "stock": 1
+      }
+    ]
+  },
+  {
+    "id": "i15p",
+    "name": "iPhone 15 Pro",
+    "line": "iPhone 15",
+    "cond": "Reacondicionado A",
+    "warr": "reacA",
+    "colors": [
+      "tinat",
+      "tiwhite",
+      "tiblack",
+      "tiblue"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR con ProMotion"
+      ],
+      [
+        "Chip",
+        "A17 Pro"
+      ],
+      [
+        "Cámara",
+        "48 MP + 12 MP ultra gran angular + 12 MP teleobjetivo 3x"
+      ],
+      [
+        "Batería",
+        "Salud de 90 % o más"
+      ],
+      [
+        "Estado",
+        "Carcasa y pantalla sin marcas visibles"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 3199000,
+        "stock": 3
+      },
+      {
+        "gb": 256,
+        "price": 3599000,
+        "stock": 1
+      }
+    ]
+  },
+  {
+    "id": "i15",
+    "name": "iPhone 15",
+    "line": "iPhone 15",
+    "cond": "Reacondicionado A",
+    "warr": "reacA",
+    "colors": [
+      "black",
+      "blue",
+      "green",
+      "yellow",
+      "pink"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A16 Bionic"
+      ],
+      [
+        "Cámara",
+        "48 MP y 12 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Salud de 90 % o más"
+      ],
+      [
+        "Estado",
+        "Carcasa y pantalla sin marcas visibles"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 2399000,
+        "stock": 4
+      },
+      {
+        "gb": 256,
+        "price": 2749000,
+        "stock": 2
+      }
+    ]
+  },
+  {
+    "id": "i14p",
+    "name": "iPhone 14 Pro",
+    "line": "iPhone 14",
+    "cond": "Reacondicionado A",
+    "warr": "reacA",
+    "colors": [
+      "spaceblack",
+      "silver",
+      "gold",
+      "deeppurple"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR con ProMotion y Dynamic Island"
+      ],
+      [
+        "Chip",
+        "A16 Bionic"
+      ],
+      [
+        "Cámara",
+        "48 MP + 12 MP ultra gran angular + 12 MP teleobjetivo 3x"
+      ],
+      [
+        "Batería",
+        "Salud de 88 % o más"
+      ],
+      [
+        "Estado",
+        "Carcasa y pantalla sin marcas visibles"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 2599000,
+        "stock": 3
+      },
+      {
+        "gb": 256,
+        "price": 2899000,
+        "stock": 1
+      }
+    ]
+  },
+  {
+    "id": "i14",
+    "name": "iPhone 14",
+    "line": "iPhone 14",
+    "cond": "Reacondicionado A",
+    "warr": "reacA",
+    "colors": [
+      "black",
+      "white",
+      "blue",
+      "yellow"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A15 Bionic"
+      ],
+      [
+        "Cámara",
+        "12 MP principal y 12 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Salud de 88 % o más"
+      ],
+      [
+        "Estado",
+        "Carcasa y pantalla sin marcas visibles"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 1799000,
+        "stock": 5
+      },
+      {
+        "gb": 256,
+        "price": 2099000,
+        "stock": 2
+      }
+    ]
+  },
+  {
+    "id": "i13",
+    "name": "iPhone 13",
+    "line": "iPhone 13",
+    "cond": "Reacondicionado B",
+    "warr": "reacB",
+    "colors": [
+      "black",
+      "white",
+      "pink",
+      "blue"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A15 Bionic"
+      ],
+      [
+        "Cámara",
+        "12 MP principal y 12 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Salud de 85 % o más"
+      ],
+      [
+        "Estado",
+        "Marcas leves de uso en la carcasa"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 128,
+        "price": 1299000,
+        "stock": 6
+      },
+      {
+        "gb": 256,
+        "price": 1549000,
+        "stock": 0
+      }
+    ]
+  },
+  {
+    "id": "i12",
+    "name": "iPhone 12",
+    "line": "iPhone 12 y anteriores",
+    "cond": "Reacondicionado B",
+    "warr": "reacB",
+    "colors": [
+      "black",
+      "white",
+      "blue",
+      "green"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Super Retina XDR"
+      ],
+      [
+        "Chip",
+        "A14 Bionic"
+      ],
+      [
+        "Cámara",
+        "12 MP principal y 12 MP ultra gran angular"
+      ],
+      [
+        "Conectividad",
+        "5G"
+      ],
+      [
+        "Batería",
+        "Salud de 85 % o más"
+      ],
+      [
+        "Estado",
+        "Marcas leves de uso en la carcasa"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 64,
+        "price": 899000,
+        "stock": 4
+      },
+      {
+        "gb": 128,
+        "price": 1049000,
+        "stock": 2
+      }
+    ]
+  },
+  {
+    "id": "i11",
+    "name": "iPhone 11",
+    "line": "iPhone 12 y anteriores",
+    "cond": "Reacondicionado B",
+    "warr": "reacB",
+    "colors": [
+      "black",
+      "white",
+      "green",
+      "yellow",
+      "purple",
+      "red"
+    ],
+    "specs": [
+      [
+        "Pantalla",
+        "6,1″ Liquid Retina (LCD)"
+      ],
+      [
+        "Chip",
+        "A13 Bionic"
+      ],
+      [
+        "Cámara",
+        "12 MP principal y 12 MP ultra gran angular"
+      ],
+      [
+        "Batería",
+        "Salud de 85 % o más"
+      ],
+      [
+        "Estado",
+        "Marcas leves de uso en la carcasa"
+      ]
+    ],
+    "storages": [
+      {
+        "gb": 64,
+        "price": 729000,
+        "stock": 3
+      },
+      {
+        "gb": 128,
+        "price": 849000,
+        "stock": 1
+      }
+    ]
+  }
+]

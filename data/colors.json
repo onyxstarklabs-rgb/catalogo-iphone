@@ -1,0 +1,106 @@
+{
+  "lavender": [
+    "Lavanda",
+    "#b7a9d6"
+  ],
+  "mist": [
+    "Azul niebla",
+    "#a8bfd3"
+  ],
+  "sage": [
+    "Salvia",
+    "#a9b79b"
+  ],
+  "black": [
+    "Negro",
+    "#2b2d31"
+  ],
+  "white": [
+    "Blanco",
+    "#ececea"
+  ],
+  "orange": [
+    "Naranja cósmico",
+    "#d9702f"
+  ],
+  "silver": [
+    "Plata",
+    "#cfd1d3"
+  ],
+  "deepblue": [
+    "Azul profundo",
+    "#2f4468"
+  ],
+  "spaceblack": [
+    "Negro espacial",
+    "#2a2b2e"
+  ],
+  "cloud": [
+    "Blanco nube",
+    "#efede8"
+  ],
+  "gold": [
+    "Dorado claro",
+    "#d9c8a0"
+  ],
+  "sky": [
+    "Azul cielo",
+    "#a9c7e0"
+  ],
+  "pink": [
+    "Rosa",
+    "#e9b4c3"
+  ],
+  "teal": [
+    "Verde azulado",
+    "#7fb5ae"
+  ],
+  "ultra": [
+    "Ultramar",
+    "#5b6fd6"
+  ],
+  "tiblack": [
+    "Titanio negro",
+    "#3a3a3c"
+  ],
+  "tiwhite": [
+    "Titanio blanco",
+    "#e6e4df"
+  ],
+  "tinat": [
+    "Titanio natural",
+    "#a39d92"
+  ],
+  "tidesert": [
+    "Titanio desierto",
+    "#b99a7c"
+  ],
+  "tiblue": [
+    "Titanio azul",
+    "#3f4a5a"
+  ],
+  "deeppurple": [
+    "Morado oscuro",
+    "#4a3d5c"
+  ],
+  "purple": [
+    "Morado",
+    "#b9a8d0"
+  ],
+  "red": [
+    "Rojo",
+    "#b3262e"
+  ],
+  "blue": [
+    "Azul",
+    "#4b6a8f"
+  ],
+  "green": [
+    "Verde",
+    "#4f6f5a"
+  ],
+  "yellow": [
+    "Amarillo",
+    "#e8d58a"
+  ]
+}
